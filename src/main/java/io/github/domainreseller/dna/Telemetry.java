@@ -31,8 +31,14 @@ import java.util.regex.Pattern;
  */
 final class Telemetry {
 
-    // Filled in when the Sentry project for DomainNameAPI-Java exists.
-    static final String DEFAULT_SENTRY_DSN = "";
+    // DomainNameAPI's Sentry project for java-dna. setErrorReportingEnabled(false) turns it off.
+    static final String DEFAULT_SENTRY_DSN = "https://e1495b1163a5a08f3989c40e32587297@sentry.atakdomain.com/21";
+
+    /**
+     * DSN new clients start with. Always {@link #DEFAULT_SENTRY_DSN} in production;
+     * the test suite blanks it so no test can report to the real project.
+     */
+    static volatile String initialDsn = DEFAULT_SENTRY_DSN;
 
     static final String APPLICATION = "DomainNameAPI-Java";
 
@@ -65,7 +71,7 @@ final class Telemetry {
     private final SecureRandom random = new SecureRandom();
     private volatile boolean enabled = true;
     private volatile boolean minimal = false;
-    private volatile String dsn = DEFAULT_SENTRY_DSN;
+    private volatile String dsn = initialDsn;
     private volatile Sender sender = new HttpSender();
     private volatile java.util.function.Supplier<String> ipResolver = Telemetry::serverIp;
     private String sessionTraceId;

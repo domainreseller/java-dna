@@ -31,16 +31,16 @@
 
 ### أ) ملف jar من صفحة الإصدارات
 
-نزّل الملف `domainnameapi-1.0.0.jar` من صفحة [الإصدارات (Releases)](https://github.com/domainreseller/java-dna/releases/latest) وأضفه إلى مسار الأصناف (classpath) لديك.
+نزّل الملف `domainnameapi-1.0.1.jar` من صفحة [الإصدارات (Releases)](https://github.com/domainreseller/java-dna/releases/latest) وأضفه إلى مسار الأصناف (classpath) لديك.
 
 ```bash
-javac -cp domainnameapi-1.0.0.jar MyApp.java
-java  -cp domainnameapi-1.0.0.jar:. MyApp
+javac -cp domainnameapi-1.0.1.jar MyApp.java
+java  -cp domainnameapi-1.0.1.jar:. MyApp
 ```
 
 ### ب) Maven / Gradle
 
-الإحداثيات: `io.github.domainreseller:domainnameapi:1.0.0`. وإلى أن تتوفر الحزمة في مستودع
+الإحداثيات: `io.github.domainreseller:domainnameapi:1.0.1`. وإلى أن تتوفر الحزمة في مستودع
 عام، ثبّتها في مستودعك المحلي انطلاقًا من الشيفرة المصدرية للإصدار:
 
 ```bash
@@ -51,14 +51,14 @@ mvn -DskipTests install
 <dependency>
     <groupId>io.github.domainreseller</groupId>
     <artifactId>domainnameapi</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.1</version>
 </dependency>
 ```
 
 ```kotlin
 // build.gradle.kts
 repositories { mavenLocal(); mavenCentral() }
-dependencies { implementation("io.github.domainreseller:domainnameapi:1.0.0") }
+dependencies { implementation("io.github.domainreseller:domainnameapi:1.0.1") }
 ```
 
 ## 🔑 بيانات اعتماد API — Reseller ID و API Key
@@ -789,9 +789,6 @@ dna.getServiceUrl();
 **مفعّلة افتراضيًا**؛ وتُوسَم الأحداث بالوسم `application=DomainNameAPI-Java`
 مع إصدار المكتبة.
 
-> ℹ️ في الإصدار 1.0.0 لا يزال عنوان Sentry المدمج فارغًا (مشروع Java قيد الإعداد)،
-> لذا لا يُرسَل أي شيء ما لم تضبط عنوانًا باستخدام `setTelemetryDsn(...)`.
-
 **ما يتم إرساله:**
 
 - رمز الخطأ ورسالته
@@ -824,7 +821,7 @@ dna.setTelemetryMinimal(true);         // أو: الرمز والرسالة ون
 - **طبقة HTTP مخصصة:** تستبدل `dna.setTransport(HttpTransport)` طبقة النقل الافتراضية
   المبنية على `java.net.http` (للوكلاء (proxies)، أو TLS مخصص، أو التسجيل، أو الاختبارات).
 - **مهلات الانتظار:** 30 ثانية لكل استدعاء، و10 ثوانٍ للاتصال.
-- **User-Agent:** يُرسِل كل طلب الترويسة `User-Agent: DomainNameAPI-Java/1.0.0`؛ إذ إن Cloudflare الموضوعة أمام
+- **User-Agent:** يُرسِل كل طلب الترويسة `User-Agent: DomainNameAPI-Java/1.0.1`؛ إذ إن Cloudflare الموضوعة أمام
   البوابة ترفض وكلاء المستخدم الافتراضيين للعملاء.
 
 ## الاختبارات

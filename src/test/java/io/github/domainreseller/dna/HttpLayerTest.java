@@ -41,7 +41,7 @@ class HttpLayerTest {
         assertEquals("application/json", r.getHeaders().get("Accept"));
         assertEquals("secret-key", r.getHeaders().get("X-API-KEY"), "API key is trimmed");
         assertEquals("reseller-id", r.getHeaders().get("__reseller"), "reseller id is trimmed");
-        assertEquals("DomainNameAPI-Java/1.0.0", r.getHeaders().get("User-Agent"));
+        assertEquals("DomainNameAPI-Java/1.0.1", r.getHeaders().get("User-Agent"));
         assertEquals("{\"domainName\":\"example.com\"}", r.getBody());
         assertEquals(30, r.getTimeoutSeconds());
         assertEquals(10, r.getConnectTimeoutSeconds());
@@ -223,10 +223,10 @@ class HttpLayerTest {
             Map<String, Object> details = api.getResellerDetails();
             assertEquals("OK", details.get("result"));
             assertEquals("1.50", details.get("balance"));
-            assertEquals("GET /api/v1/deposit/accounts/me ua=DomainNameAPI-Java/1.0.0 key=k-1 reseller=r-1 body=", seen.get(0));
+            assertEquals("GET /api/v1/deposit/accounts/me ua=DomainNameAPI-Java/1.0.1 key=k-1 reseller=r-1 body=", seen.get(0));
 
             api.deleteForwarding("example.com");
-            assertEquals("DELETE /api/v1/domains/forwards?DomainName=example.com ua=DomainNameAPI-Java/1.0.0 key=k-1 reseller=r-1 body=",
+            assertEquals("DELETE /api/v1/domains/forwards?DomainName=example.com ua=DomainNameAPI-Java/1.0.1 key=k-1 reseller=r-1 body=",
                 seen.get(1));
 
             api.setServiceUrl("http://127.0.0.1:" + server.getAddress().getPort() + "/api/v1/redirect");

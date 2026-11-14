@@ -31,16 +31,16 @@ eyni sorğular və eyni qaytarılan dəyərlər. Kotlin və digər JVM dilləri 
 
 ### A) Release jar faylı
 
-[Releases](https://github.com/domainreseller/java-dna/releases/latest) səhifəsindən `domainnameapi-1.0.0.jar` faylını yükləyin və onu classpath-ə əlavə edin.
+[Releases](https://github.com/domainreseller/java-dna/releases/latest) səhifəsindən `domainnameapi-1.0.1.jar` faylını yükləyin və onu classpath-ə əlavə edin.
 
 ```bash
-javac -cp domainnameapi-1.0.0.jar MyApp.java
-java  -cp domainnameapi-1.0.0.jar:. MyApp
+javac -cp domainnameapi-1.0.1.jar MyApp.java
+java  -cp domainnameapi-1.0.1.jar:. MyApp
 ```
 
 ### B) Maven / Gradle
 
-Koordinatlar: `io.github.domainreseller:domainnameapi:1.0.0`. Artefakt ictimai repozitoriyada əlçatan olana qədər
+Koordinatlar: `io.github.domainreseller:domainnameapi:1.0.1`. Artefakt ictimai repozitoriyada əlçatan olana qədər
 onu release mənbə kodundan lokal repozitoriyanıza quraşdırın:
 
 ```bash
@@ -51,14 +51,14 @@ mvn -DskipTests install
 <dependency>
     <groupId>io.github.domainreseller</groupId>
     <artifactId>domainnameapi</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.1</version>
 </dependency>
 ```
 
 ```kotlin
 // build.gradle.kts
 repositories { mavenLocal(); mavenCentral() }
-dependencies { implementation("io.github.domainreseller:domainnameapi:1.0.0") }
+dependencies { implementation("io.github.domainreseller:domainnameapi:1.0.1") }
 ```
 
 ## 🔑 API Məlumatları — Reseller ID və API Key
@@ -788,9 +788,6 @@ Uğurlu çağırışların kiçik təsadüfi hissəsi (4%, üstəgəl 1 saniyəd
 göndərilir. Hesabatlar arxa planda göndərilir və çağırışınızı heç vaxt bloklamır və ya pozmur. Xəta hesabatları
 **standart olaraq aktivdir**; hadisələr kitabxana versiyası ilə birlikdə `application=DomainNameAPI-Java` teqi ilə işarələnir.
 
-> ℹ️ 1.0.0 versiyasında daxili Sentry ünvanı hələ boşdur (Java layihəsi hələ qurulma
-> mərhələsindədir), buna görə `setTelemetryDsn(...)` ilə ünvan konfiqurasiya etməsəniz, heç nə göndərilmir.
-
 **Nə göndərilir:**
 
 - xəta kodu və mesajı
@@ -823,7 +820,7 @@ dna.setTelemetryMinimal(true);         // və ya: yalnız kod, mesaj, son nöqt�
 - **Xüsusi HTTP qatı:** `dna.setTransport(HttpTransport)` standart `java.net.http`
   nəqliyyat qatını əvəz edir (proksilər, xüsusi TLS, qeydə alma, testlər).
 - **Vaxt aşımları:** hər çağırış üçün 30 san, qoşulma üçün 10 san.
-- **User-Agent:** hər sorğu `User-Agent: DomainNameAPI-Java/1.0.0` başlığını göndərir; gateway-in qarşısındakı Cloudflare
+- **User-Agent:** hər sorğu `User-Agent: DomainNameAPI-Java/1.0.1` başlığını göndərir; gateway-in qarşısındakı Cloudflare
   standart müştəri agentlərini rədd edir.
 
 ## Testlər

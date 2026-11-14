@@ -20,12 +20,44 @@ class TelemetryTest {
     private static final String DSN = "https://publickey@sentry.example.test/42";
 
     @Test
-    void defaultDsnIsEmptyAndTelemetryIsANoOp() {
-        assertEquals("", Telemetry.DEFAULT_SENTRY_DSN);
-        DomainNameApi api = new DomainNameApi("r", "k");
-        assertEquals("", api.engine().telemetry.getDsn());
+    void defaultDsnIsTheJavaDnaProject() {
+        assertEquals("https://e1495b1163a5a08f3989c40e32587297@sentry.atakdomain.com/21", Telemetry.DEFAULT_SENTRY_DSN);
+        Telemetry.Dsn d = Telemetry.parseDsn(Telemetry.DEFAULT_SENTRY_DSN);
+        assertNotNull(d);
+        assertEquals("https://sentry.atakdomain.com/api/21/store/", d.storeUrl());
+
+        // Production clients start with the default DSN. Only object construction here:
+        // nothing is built or sent, and the test hook is restored right away.
+        String saved = Telemetry.initialDsn;
+        DomainNameApi api;
+        try {
+            Telemetry.initialDsn = Telemetry.DEFAULT_SENTRY_DSN;
+            api = new DomainNameApi("r", "k");
+        } finally {
+            Telemetry.initialDsn = saved;
+        }
+        assertEquals(Telemetry.DEFAULT_SENTRY_DSN, api.engine().telemetry.getDsn());
         assertTrue(api.engine().telemetry.isEnabled(), "on by default");
+    }
+
+    @Test
+    void testSuiteNeverUsesTheRealDsn() {
+        assertEquals("", Telemetry.initialDsn);
+        assertEquals("", new DomainNameApi("r", "k").engine().telemetry.getDsn());
+    }
+
+    @Test
+    void emptyDsnIsANoOp() throws Exception {
+        CountDownLatch posted = new CountDownLatch(1);
+        DomainNameApi api = new DomainNameApi("r", "k");
+        api.setTelemetryDsn("");
+        api.engine().telemetry.setSender((url, json, auth) -> posted.countDown());
+        assertEquals("", api.engine().telemetry.getDsn());
+        assertTrue(api.engine().telemetry.isEnabled());
         assertNull(api.engine().telemetry.buildErrorEvent(api.engine(), "boom", 500, new StackTraceElement[0]));
+        api.engine().telemetry.sendError(api.engine(), "boom", 500);
+        api.engine().telemetry.sendPerformance(api.engine(), 5000, 0L, 5000L);
+        assertFalse(posted.await(300, TimeUnit.MILLISECONDS), "nothing is sent with an empty DSN");
     }
 
     @Test
@@ -126,13 +158,13 @@ class TelemetryTest {
         assertTrue(latch.await(5, TimeUnit.SECONDS), "event posted");
         String[] post = posts.get(0);
         assertEquals("https://sentry.example.test/api/42/store/", post[0]);
-        assertTrue(post[2].startsWith("Sentry sentry_version=7, sentry_client=java-dna/1.0.0, sentry_key=publickey"), post[2]);
+        assertTrue(post[2].startsWith("Sentry sentry_version=7, sentry_client=java-dna/1.0.1, sentry_key=publickey"), post[2]);
         @SuppressWarnings("unchecked")
         Map<String, Object> event = (Map<String, Object>) Json.parse(post[1]);
         Map<?, ?> tags = (Map<?, ?>) event.get("tags");
         assertEquals("DomainNameAPI-Java", tags.get("application"));
-        assertEquals("1.0.0", tags.get("library_version"));
-        assertEquals("1.0.0", event.get("release"));
+        assertEquals("1.0.1", tags.get("library_version"));
+        assertEquals("1.0.1", event.get("release"));
         assertEquals("production", event.get("environment"));
         assertEquals("example.com", tags.get("domain"));
         assertEquals("203.0.113.1", tags.get("ip_address"));

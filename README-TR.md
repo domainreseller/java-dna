@@ -31,16 +31,16 @@ aynı istekler ve aynı dönüş değerleri. Kotlin ve diğer JVM dilleri taraf�
 
 ### A) Release jar dosyası
 
-[Releases](https://github.com/domainreseller/java-dna/releases/latest) sayfasından `domainnameapi-1.0.0.jar` dosyasını indirin ve classpath'inize ekleyin.
+[Releases](https://github.com/domainreseller/java-dna/releases/latest) sayfasından `domainnameapi-1.0.1.jar` dosyasını indirin ve classpath'inize ekleyin.
 
 ```bash
-javac -cp domainnameapi-1.0.0.jar MyApp.java
-java  -cp domainnameapi-1.0.0.jar:. MyApp
+javac -cp domainnameapi-1.0.1.jar MyApp.java
+java  -cp domainnameapi-1.0.1.jar:. MyApp
 ```
 
 ### B) Maven / Gradle
 
-Koordinatlar: `io.github.domainreseller:domainnameapi:1.0.0`. Artifact herkese açık bir depoda yayınlanana
+Koordinatlar: `io.github.domainreseller:domainnameapi:1.0.1`. Artifact herkese açık bir depoda yayınlanana
 kadar, release kaynak kodundan yerel deponuza kurun:
 
 ```bash
@@ -51,14 +51,14 @@ mvn -DskipTests install
 <dependency>
     <groupId>io.github.domainreseller</groupId>
     <artifactId>domainnameapi</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.1</version>
 </dependency>
 ```
 
 ```kotlin
 // build.gradle.kts
 repositories { mavenLocal(); mavenCentral() }
-dependencies { implementation("io.github.domainreseller:domainnameapi:1.0.0") }
+dependencies { implementation("io.github.domainreseller:domainnameapi:1.0.1") }
 ```
 
 ## 🔑 API Bilgileri — Reseller ID ve API Key
@@ -789,9 +789,6 @@ performans kaydı olarak gönderilir. Raporlar arka planda gönderilir; çağrı
 Hata raporlama **varsayılan olarak açıktır**; olaylar kütüphane sürümüyle birlikte `application=DomainNameAPI-Java`
 etiketiyle işaretlenir.
 
-> ℹ️ 1.0.0 sürümünde yerleşik Sentry adresi henüz boştur (Java projesi hâlâ kurulma
-> aşamasındadır); bu nedenle `setTelemetryDsn(...)` ile bir adres yapılandırmadığınız sürece hiçbir şey gönderilmez.
-
 **Gönderilen bilgiler:**
 
 - hata kodu ve mesajı
@@ -824,7 +821,7 @@ dna.setTelemetryMinimal(true);         // veya: yalnızca kod, mesaj, uç nokta,
 - **Özel HTTP katmanı:** `dna.setTransport(HttpTransport)` varsayılan `java.net.http`
   aktarım katmanının yerini alır (proxy'ler, özel TLS, kayıt alma, testler).
 - **Zaman aşımları:** çağrı başına 30 sn, bağlantı için 10 sn.
-- **User-Agent:** her istek `User-Agent: DomainNameAPI-Java/1.0.0` başlığını gönderir; gateway'in önündeki Cloudflare
+- **User-Agent:** her istek `User-Agent: DomainNameAPI-Java/1.0.1` başlığını gönderir; gateway'in önündeki Cloudflare
   varsayılan istemci tanımlayıcılarını reddeder.
 
 ## Testler

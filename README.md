@@ -31,16 +31,16 @@ the wire and the same return values. Kotlin and other JVM languages can use it d
 
 ### A) Release jar
 
-Download `domainnameapi-1.0.0.jar` from the [Releases](https://github.com/domainreseller/java-dna/releases/latest) page and put it on your classpath.
+Download `domainnameapi-1.0.1.jar` from the [Releases](https://github.com/domainreseller/java-dna/releases/latest) page and put it on your classpath.
 
 ```bash
-javac -cp domainnameapi-1.0.0.jar MyApp.java
-java  -cp domainnameapi-1.0.0.jar:. MyApp
+javac -cp domainnameapi-1.0.1.jar MyApp.java
+java  -cp domainnameapi-1.0.1.jar:. MyApp
 ```
 
 ### B) Maven / Gradle
 
-Coordinates: `io.github.domainreseller:domainnameapi:1.0.0`. Until the artifact is available from a
+Coordinates: `io.github.domainreseller:domainnameapi:1.0.1`. Until the artifact is available from a
 public repository, install it into your local repository from the release source:
 
 ```bash
@@ -51,14 +51,14 @@ mvn -DskipTests install
 <dependency>
     <groupId>io.github.domainreseller</groupId>
     <artifactId>domainnameapi</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.1</version>
 </dependency>
 ```
 
 ```kotlin
 // build.gradle.kts
 repositories { mavenLocal(); mavenCentral() }
-dependencies { implementation("io.github.domainreseller:domainnameapi:1.0.0") }
+dependencies { implementation("io.github.domainreseller:domainnameapi:1.0.1") }
 ```
 
 ## 🔑 API Credentials — Reseller ID & API Key
@@ -789,9 +789,6 @@ sent as a performance record. Reports are sent in the background and never block
 call. Error reporting is **on by default**; events are tagged `application=DomainNameAPI-Java`
 with the library version.
 
-> ℹ️ In version 1.0.0 the built-in Sentry address is still empty (the Java project is being set
-> up), so nothing is sent unless you configure an address with `setTelemetryDsn(...)`.
-
 **What is sent:**
 
 - error code and message
@@ -824,7 +821,7 @@ dna.setTelemetryMinimal(true);         // or: only code, message, endpoint, timi
 - **Custom HTTP layer:** `dna.setTransport(HttpTransport)` replaces the default
   `java.net.http` transport (proxies, custom TLS, recording, tests).
 - **Timeouts:** 30 s per call, 10 s to connect.
-- **User-Agent:** every request sends `User-Agent: DomainNameAPI-Java/1.0.0`; Cloudflare in front of
+- **User-Agent:** every request sends `User-Agent: DomainNameAPI-Java/1.0.1`; Cloudflare in front of
   the gateway rejects default client agents.
 
 ## Testing

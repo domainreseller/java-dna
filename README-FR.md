@@ -31,16 +31,16 @@ sur le réseau et les mêmes valeurs de retour. Kotlin et les autres langages JV
 
 ### A) Jar de release
 
-Téléchargez `domainnameapi-1.0.0.jar` depuis la page [Releases](https://github.com/domainreseller/java-dna/releases/latest) et ajoutez-le à votre classpath.
+Téléchargez `domainnameapi-1.0.1.jar` depuis la page [Releases](https://github.com/domainreseller/java-dna/releases/latest) et ajoutez-le à votre classpath.
 
 ```bash
-javac -cp domainnameapi-1.0.0.jar MyApp.java
-java  -cp domainnameapi-1.0.0.jar:. MyApp
+javac -cp domainnameapi-1.0.1.jar MyApp.java
+java  -cp domainnameapi-1.0.1.jar:. MyApp
 ```
 
 ### B) Maven / Gradle
 
-Coordonnées : `io.github.domainreseller:domainnameapi:1.0.0`. Tant que l'artefact n'est pas disponible dans un
+Coordonnées : `io.github.domainreseller:domainnameapi:1.0.1`. Tant que l'artefact n'est pas disponible dans un
 dépôt public, installez-le dans votre dépôt local à partir des sources de la release :
 
 ```bash
@@ -51,14 +51,14 @@ mvn -DskipTests install
 <dependency>
     <groupId>io.github.domainreseller</groupId>
     <artifactId>domainnameapi</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.1</version>
 </dependency>
 ```
 
 ```kotlin
 // build.gradle.kts
 repositories { mavenLocal(); mavenCentral() }
-dependencies { implementation("io.github.domainreseller:domainnameapi:1.0.0") }
+dependencies { implementation("io.github.domainreseller:domainnameapi:1.0.1") }
 ```
 
 ## 🔑 Identifiants API — Reseller ID et API Key
@@ -789,9 +789,6 @@ envoyée sous forme d'enregistrement de performance. Les rapports sont envoyés 
 appel. Le signalement des erreurs est **activé par défaut** ; les événements sont étiquetés `application=DomainNameAPI-Java`
 avec la version de la bibliothèque.
 
-> ℹ️ Dans la version 1.0.0, l'adresse Sentry intégrée est encore vide (le projet Java est en cours de
-> mise en place) ; rien n'est donc envoyé tant que vous ne configurez pas une adresse avec `setTelemetryDsn(...)`.
-
 **Ce qui est envoyé :**
 
 - le code et le message d'erreur
@@ -824,7 +821,7 @@ dna.setTelemetryMinimal(true);         // ou : uniquement code, message, point d
 - **Couche HTTP personnalisée :** `dna.setTransport(HttpTransport)` remplace le transport
   `java.net.http` par défaut (proxys, TLS personnalisé, enregistrement des échanges, tests).
 - **Délais d'expiration :** 30 s par appel, 10 s pour la connexion.
-- **User-Agent :** chaque requête envoie `User-Agent: DomainNameAPI-Java/1.0.0` ; Cloudflare, placé devant
+- **User-Agent :** chaque requête envoie `User-Agent: DomainNameAPI-Java/1.0.1` ; Cloudflare, placé devant
   la passerelle, rejette les agents clients par défaut.
 
 ## Tests

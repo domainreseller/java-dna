@@ -4,6 +4,17 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.1] - 2026-11-14
+
+### Changed
+
+- Error reporting now has its own Sentry project: the built-in default DSN points to
+  DomainNameAPI's java-dna project, so telemetry is active by default as documented
+  (in 1.0.0 the default DSN was empty and nothing was sent).
+- Turn it off with `setErrorReportingEnabled(false)`; `setTelemetryDsn(...)` still overrides
+  the default DSN.
+- User-Agent is now `DomainNameAPI-Java/1.0.1`.
+
 ## [1.0.0] - Unreleased
 
 First release: a faithful Java port of [php-dna](https://github.com/domainreseller/php-dna)
@@ -49,4 +60,5 @@ First release: a faithful Java port of [php-dna](https://github.com/domainresell
 - README in English, Turkish, German, French, Italian, Dutch, Azerbaijani, Arabic and
   Simplified Chinese.
 
+[1.0.1]: https://github.com/domainreseller/java-dna/releases/tag/V1.0.1
 [1.0.0]: https://github.com/domainreseller/java-dna/releases/tag/V1.0.0

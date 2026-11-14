@@ -31,16 +31,16 @@ DomainNameAPI 域名代理商 REST API 的 Java 客户端。它是
 
 ### A) 发布版 jar
 
-从 [Releases](https://github.com/domainreseller/java-dna/releases/latest) 页面下载 `domainnameapi-1.0.0.jar`，并将其加入您的 classpath。
+从 [Releases](https://github.com/domainreseller/java-dna/releases/latest) 页面下载 `domainnameapi-1.0.1.jar`，并将其加入您的 classpath。
 
 ```bash
-javac -cp domainnameapi-1.0.0.jar MyApp.java
-java  -cp domainnameapi-1.0.0.jar:. MyApp
+javac -cp domainnameapi-1.0.1.jar MyApp.java
+java  -cp domainnameapi-1.0.1.jar:. MyApp
 ```
 
 ### B) Maven / Gradle
 
-坐标：`io.github.domainreseller:domainnameapi:1.0.0`。在该构件可从公共仓库获取之前，
+坐标：`io.github.domainreseller:domainnameapi:1.0.1`。在该构件可从公共仓库获取之前，
 请基于发布版源码将其安装到本地仓库：
 
 ```bash
@@ -51,14 +51,14 @@ mvn -DskipTests install
 <dependency>
     <groupId>io.github.domainreseller</groupId>
     <artifactId>domainnameapi</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.1</version>
 </dependency>
 ```
 
 ```kotlin
 // build.gradle.kts
 repositories { mavenLocal(); mavenCentral() }
-dependencies { implementation("io.github.domainreseller:domainnameapi:1.0.0") }
+dependencies { implementation("io.github.domainreseller:domainnameapi:1.0.1") }
 ```
 
 ## 🔑 API 凭据 — Reseller ID 与 API Key
@@ -785,9 +785,6 @@ OTE 测试环境 `https://ote.domainresellerapi.com/api/v1`。`setServiceUrl(url
 **默认开启**；事件会附带标签 `application=DomainNameAPI-Java`
 以及库版本号。
 
-> ℹ️ 在 1.0.0 版本中，内置的 Sentry 地址仍为空（Java 项目正在配置中），
-> 因此除非您使用 `setTelemetryDsn(...)` 配置地址，否则不会发送任何内容。
-
 **发送的内容：**
 
 - 错误码和错误信息
@@ -820,7 +817,7 @@ dna.setTelemetryMinimal(true);         // 或者：仅发送错误码、信息�
 - **自定义 HTTP 层：** `dna.setTransport(HttpTransport)` 可替换默认的
   `java.net.http` 传输层（用于代理、自定义 TLS、录制、测试等）。
 - **超时：** 每次调用 30 秒，连接 10 秒。
-- **User-Agent：** 每个请求都会发送 `User-Agent: DomainNameAPI-Java/1.0.0`；网关前端的 Cloudflare
+- **User-Agent：** 每个请求都会发送 `User-Agent: DomainNameAPI-Java/1.0.1`；网关前端的 Cloudflare
   会拒绝默认的客户端 User-Agent。
 
 ## 测试
