@@ -10,938 +10,864 @@
   <a href="README-IT.md"> | IT <img style="padding-top: 8px" src="https://raw.githubusercontent.com/yammadev/flag-icons/master/png/IT.png" alt="IT" height="20" /></a>
 </div>
 
-# java-dna — مكتبة DomainNameAPI للغة Java
+<div dir="rtl">
 
-عميل Java لواجهة REST API الخاصة بموزعي النطاقات لدى DomainNameAPI. وهي نقل أمين لمكتبة
-[php-dna](https://github.com/domainreseller/php-dna): الدوال نفسها، والطلبات نفسها المُرسَلة عبر الشبكة،
-والقيم المُعادة نفسها. ويمكن استخدامها مباشرةً من Kotlin ومن لغات JVM الأخرى.
+# حزمة DomainNameAPI لـ Java (java-dna)
 
-## 📦 التنزيل — استخدم دائمًا صفحة الإصدارات (Releases)!
+</div>
 
-⬇️ **احصل على أحدث نسخة مختبَرة من هنا: https://github.com/domainreseller/java-dna/releases/latest**
+<p>
+  <a href="https://github.com/domainreseller/java-dna/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/domainreseller/java-dna/ci.yml?branch=main&label=CI&style=flat-square" alt="CI"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-0B8DB5?style=flat-square" alt="Apache-2.0"></a>
+  <img src="https://img.shields.io/badge/Java-17%2B-0B8DB5?style=flat-square" alt="Java 17+">
+</p>
 
-> ⚠️ **لا** تستخدم الزر الأخضر **Code → Download ZIP** — فهو ينزّل فرع التطوير الخام. حزم الإصدارات مرقّمة الإصدار ومختبَرة وجاهزة لبيئة الإنتاج.
+<div dir="rtl">
 
-## دليل التثبيت والتكامل
+حزمة SDK الرسمية لـ Java الخاصة بمنصة الموزّعين [Domain Name API](https://www.domainnameapi.com). تغطي جميع عمليات REST API
+البالغ عددها 67 عملية بعملاء ونماذج مكتوبة بأنواع صريحة: النطاقات، وجهات الاتصال، وDNS، وDNSSEC، وشهادات SSL،
+والاستضافة، والطلبات، والمنتجات، وحسابك.
 
-### الحد الأدنى من المتطلبات
+</div>
 
-- Java 11 أو أعلى (يوصى بـ 17 أو 21)
-- لا توجد أي اعتماديات وقت التشغيل: تستخدم المكتبة `java.net.http.HttpClient` ومُرمِّز JSON صغيرًا مدمجًا.
+```java
+DomainNameApiClient client = DomainNameApiClient.create(resellerId, apiKey, ApiEnvironment.OTE);
 
-### أ) ملف jar من صفحة الإصدارات
-
-نزّل الملف `domainnameapi-1.0.1.jar` من صفحة [الإصدارات (Releases)](https://github.com/domainreseller/java-dna/releases/latest) وأضفه إلى مسار الأصناف (classpath) لديك.
-
-```bash
-javac -cp domainnameapi-1.0.1.jar MyApp.java
-java  -cp domainnameapi-1.0.1.jar:. MyApp
+DomainSearchResult search = client.domains().search("example.com");
+if (search.info() != null && search.info().isAvailable()) {
+    client.domains().register("example.com", contact, List.of("tr.apiname.com", "eu.apiname.com"));
+}
 ```
 
-### ب) Maven / Gradle
+<div dir="rtl">
 
-الإحداثيات: `io.github.domainreseller:domainnameapi:1.0.1`. وإلى أن تتوفر الحزمة في مستودع
-عام، ثبّتها في مستودعك المحلي انطلاقًا من الشيفرة المصدرية للإصدار:
+- **كل شيء مكتوب بأنواع صريحة.** كل عملية هي فئة طلب، وكل إجابة هي سجل (record) مزوّد بتوثيق Javadoc. لا خرائط (maps) ولا تحليل JSON.
+- **طلباتك الخاصة.** كل طلب يشتق من `BaseRequest`. ورّث منه لنقطة نهاية لا تغطيها الحزمة بعد.
+- **آمنة مع الأموال.** يعلن كل طلب ما إذا كان يقرأ، أو يكتب، أو يخصم من رصيدك، أو يحذف شيئًا. لا يُعاد إرسال الطلبات المدفوعة أبدًا، ووضع القراءة فقط يمنع أي تغيير.
+- **مرونة مدمجة.** تُراعى حدود معدل الطلبات تلقائيًا، وتُعاد محاولة إجابات 429، وتُعاد محاولة أخطاء الشبكة في عمليات القراءة.
+- **أخطاء واضحة.** استثناء واحد غير مُتحقَّق منه (unchecked) مع تصنيف ثابت، ورمز الخطأ من API، وأخطاء التحقق على مستوى الحقول، ومعرّف الارتباط (correlation ID) وتلميح.
+- **Java حديثة.** Java 17 فما فوق، والسجلات (records)، وترقيم صفحات كسول عبر `Stream`، ونسخ تعتمد `CompletableFuture`، وعميل آمن للاستخدام من عدة خيوط مبني على `java.net.http`.
+- **خصوصية تامة.** لا قياس عن بُعد (telemetry). لا يغادر عمليتك شيء سوى الطلبات التي ترسلها إلى API.
 
-```bash
-mvn -DskipTests install
-```
+وهي النظير في Java لـ [`dna`، أداة CLI الخاصة بـ Domain Name API](https://github.com/domainreseller/cli): وثيقة API نفسها،
+وفئات الأمان نفسها، وقواعد إعادة المحاولة ورموز الأخطاء نفسها.
+
+## المحتويات
+
+- [التثبيت](#install)
+- [بيانات الاعتماد](#credentials)
+- [البدء السريع](#quick-start)
+- [الإعداد](#configuration)
+- [الاستخدام](#usage): [الحساب](#account) · [النطاقات](#domains) · [جهات الاتصال](#contacts) · [DNS](#dns) · [DNSSEC](#dnssec) · [SSL](#ssl) · [الاستضافة](#hosting) · [الطلبات والمنتجات](#orders-and-products)
+- [الطلبات و`BaseRequest`](#requests-and-baserequest)
+- [الأخطاء](#errors)
+- [الأمان وإعادة المحاولة وحدود معدل الطلبات](#safety-retries-and-rate-limits)
+- [الاستدعاءات غير المتزامنة](#asynchronous-calls)
+- [اختبار شيفرتك](#testing-your-code)
+- [بنية المشروع](#project-layout)
+- [التطوير](#development)
+- [الترقية من 1.x](#upgrading-from-1x)
+
+<a id="install"></a>
+
+## التثبيت
+
+> [!IMPORTANT]
+> **استخدم دائمًا [أحدث إصدار](https://github.com/domainreseller/java-dna/releases/latest).** حزم الإصدارات مرقّمة بإصدارات ومُختبرة.
+> أما زر **Code → Download ZIP** الأخضر فينزّل فرع التطوير بدلًا منها.
+
+الإحداثيات (coordinates): ‏`io.github.domainreseller:domainnameapi:2.0.0`.
+
+</div>
 
 ```xml
 <dependency>
     <groupId>io.github.domainreseller</groupId>
     <artifactId>domainnameapi</artifactId>
-    <version>1.0.1</version>
+    <version>2.0.0</version>
 </dependency>
 ```
 
 ```kotlin
 // build.gradle.kts
-repositories { mavenLocal(); mavenCentral() }
-dependencies { implementation("io.github.domainreseller:domainnameapi:1.0.1") }
+dependencies {
+    implementation("io.github.domainreseller:domainnameapi:2.0.0")
+}
 ```
 
-## 🔑 بيانات اعتماد API — Reseller ID و API Key
+<div dir="rtl">
 
-تتواصل المكتبة مع DomainNameAPI REST API وتحتاج إلى بيانات اعتماد اثنتين فقط تُمرَّران إلى الدالة الإنشائية (constructor):
+إلى أن تتوفر الحزمة في مستودع عام، ثبّتها في مستودع Maven المحلي لديك من المصدر البرمجي لأحد الإصدارات
+(`mvn -DskipTests install`)، وأضف `mavenLocal()` إلى مستودعات Gradle لديك.
 
-| المُعامِل | القيمة |
-|---|---|
-| الأول | Reseller ID — بصيغة UUID مثل `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx` |
-| الثاني | API Key |
+**المتطلبات:** Java 17 أو أحدث. التبعية الوحيدة هي [Jackson](https://github.com/FasterXML/jackson-databind)
+(`jackson-databind`) لمعالجة JSON؛ أما HTTP فيمر عبر `java.net.http.HttpClient` المدمج في JDK.
 
-> 💡 ستجد **Reseller ID** و **API Key** في لوحة DomainNameAPI الخاصة بك ضمن **إعدادات API**.
-> ⚠️ هذه **بيانات اعتماد API** — بيانات تسجيل الدخول إلى اللوحة **لن تعمل** هنا.
+<a id="credentials"></a>
 
-```java
-import io.github.domainreseller.dna.DomainNameApi;
-import io.github.domainreseller.dna.Json;
+## بيانات الاعتماد
 
-String resellerId = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx";
-String apiKey     = "your-api-key";
+تصادق API على كل طلب بقيمتين، وترسلهما الحزمة نيابةً عنك:
 
-// البيئة الحية
-DomainNameApi dna = new DomainNameApi(resellerId, apiKey);
+| القيمة | الترويسة (Header) | أين تجدها |
+|---|---|---|
+| Reseller ID (معرّف UUID) | `__reseller` | لوحة الموزّع ← **API settings** |
+| API key | `X-API-KEY` | لوحة الموزّع ← **API settings** |
 
-// بيئة الاختبار (OTE)
-DomainNameApi ote = new DomainNameApi(resellerId, apiKey, true);
-```
+> [!NOTE]
+> هذه **بيانات اعتماد API**: بيانات تسجيل الدخول إلى اللوحة لا تعمل هنا. **تستخدم بيئة الإنتاج وبيئة OTE (بيئة الاختبار)
+> مفاتيح API مختلفة.** استخدام مفتاح إحداهما مع الأخرى يفشل بالخطأ `INVALID_API_KEY` أو `INVALID_RESELLER`.
 
-تُزال المسافات الزائدة من طرفي كلتا القيمتين. ويمكن أيضًا تمرير علامة وضع الاختبار كسلسلة نصية، كما تخزّن
-لوحات التحكم إعدادات مربعات الاختيار: القيم `"1"` و`"true"` و`"on"` و`"yes"` تختار بيئة الاختبار، وأي قيمة أخرى تختار البيئة الحية.
+<a id="quick-start"></a>
 
 ## البدء السريع
 
+</div>
+
 ```java
-DomainNameApi dna = new DomainNameApi(resellerId, apiKey);
+import io.github.domainreseller.dna.ApiEnvironment;
+import io.github.domainreseller.dna.DomainNameApiClient;
+import io.github.domainreseller.dna.accounts.ResellerAccount;
+import io.github.domainreseller.dna.contacts.ContactInfo;
+import io.github.domainreseller.dna.domains.DomainOperationResult;
+import io.github.domainreseller.dna.domains.DomainSearchResult;
+import java.util.List;
 
-Map<String, Object> details = dna.getDetails("example.com");
-if ("OK".equals(details.get("result"))) {
-    Map<?, ?> data = (Map<?, ?>) details.get("data");
-    System.out.println(data.get("Status") + " until " + ((Map<?, ?>) data.get("Dates")).get("Expiration"));
-} else {
-    Map<?, ?> error = (Map<?, ?>) details.get("error");
-    System.out.println(error.get("Code") + ": " + error.get("Message"));
-}
+// OTE is the test environment: real API, its own data, no real money.
+DomainNameApiClient client = DomainNameApiClient.create(resellerId, apiKey, ApiEnvironment.OTE);
 
-// طباعة أي نتيجة بصيغة JSON
-System.out.println(Json.encodePretty(details));
+// 1. Check the credentials and the balance.
+ResellerAccount account = client.account().get();
+System.out.println(account.resellerName() + ": " + account.usdBalance() + " USD");
+
+// 2. Is the domain available, and at what price?
+DomainSearchResult search = client.domains().search("my-new-domain.com");
+System.out.println(search.info().status() + " " + search.info().price() + " " + search.info().currency());
+
+// 3. Register it with one contact for all four roles. This charges the balance.
+ContactInfo contact = new ContactInfo()
+        .firstName("Ada").lastName("Lovelace").email("ada@example.com")
+        .address("1 Example Street").city("Istanbul").state("Istanbul").postalCode("34000")
+        .country("TR").phoneCountryCode("90").phone("5551234567");
+DomainOperationResult result = client.domains().register("my-new-domain.com", contact,
+        List.of("tr.apiname.com", "eu.apiname.com"));
+System.out.println(result.success() + " " + result.status() + ", expires " + result.expirationDate());
+
+// 4. List every domain; pages are fetched as the stream is consumed.
+client.domains().listAll().forEach(domain ->
+        System.out.println(domain.domainName() + " expires in " + domain.remainingDays() + " days"));
 ```
 
-Kotlin:
+<div dir="rtl">
 
-```kotlin
-val dna = DomainNameApi(resellerId, apiKey)
-val details = dna.getDetails("example.com")
-if (details["result"] == "OK") {
-    val data = details["data"] as Map<*, *>
-    println(data["Status"])
-}
+يحتوي مجلد [الأمثلة](examples) على برامج قابلة للتشغيل لهذه السيناريوهات. وهي تقرأ متغيرات البيئة `DNA_*`،
+لذا وجّهها إلى OTE:
+
+</div>
+
+```bash
+export DNA_RESELLER_ID=... DNA_API_KEY=... DNA_ENV=ote
 ```
 
-### القيم المُعادة
+<div dir="rtl">
 
-تُعيد الدوال البنية الديناميكية نفسها التي تُعيدها php-dna، مبنيةً من `LinkedHashMap` و
-`ArrayList`:
+<a id="configuration"></a>
 
-- أسماء المفاتيح مطابقة تمامًا لـ php-dna ‏(`Status`، `LockStatus`، `NameServers`، ...).
-- العلامات مثل `LockStatus` هي **سلاسل نصية** `"true"` / `"false"`.
-- الأسعار والأرصدة **سلاسل نصية مُنسَّقة** (`"11.9900"`، `"601.64"`).
-- الأرقام من النوع `Integer` أو `Long` أو `Double`؛ وكائنات JSON هي `Map<String, Object>`، والمصفوفات `List<Object>`.
-- تُعيد معظم الدوال `{"result": "OK", "data": {...}}` أو `{"result": "ERROR", "error": {...}}`.
-  الاستثناءات: تستخدم `getCurrentBalance` غلافًا من نوع `OperationResult`، وتُعيد `checkAvailability`
-  قائمة `List` مجردة عند النجاح.
+## الإعداد
 
-تُعاد الأخطاء كقيم ولا تُرمى كاستثناءات. يحتفظ كل كائن عميل ببيانات تشخيصية لكل استدعاء، لذا استخدم كائنًا
-واحدًا لكل خيط تنفيذ (thread).
+هناك أربع طرق لإنشاء عميل:
+
+</div>
+
+```java
+// Credentials and environment
+DomainNameApiClient client = DomainNameApiClient.create(resellerId, apiKey, ApiEnvironment.PRODUCTION);
+
+// All settings
+DomainNameApiClient client = DomainNameApiClient.builder()
+        .credentials(resellerId, apiKey)
+        .environment(ApiEnvironment.OTE)
+        .timeout(Duration.ofSeconds(30))
+        .readOnly(true)
+        .build();
+
+// The same environment variables the dna CLI reads
+DomainNameApiClient client = DomainNameApiClient.fromEnvironment();
+
+// The environment variables, plus your own settings
+DomainNameApiClient client = DomainNameApiClient.Builder.fromEnvironment()
+        .httpClient(myHttpClient)        // for example with a proxy
+        .build();
+```
+
+<div dir="rtl">
+
+| دالة الباني (Builder) | الافتراضي | المعنى |
+|---|---|---|
+| `credentials(resellerId, apiKey)` | (مطلوب) | بيانات الاعتماد. |
+| `environment(...)` | `PRODUCTION` | `PRODUCTION` (‏`https://api.domainresellerapi.com`) أو `OTE` (‏`https://ote.domainresellerapi.com`). |
+| `baseUri(...)` | لا شيء | يتجاوز عنوان البيئة، مثلًا عند استخدام وكيل (proxy). |
+| `timeout(...)` | 60 ثانية | المهلة الزمنية لمحاولة واحدة. |
+| `maxRetries(...)` | 2 | عدد مرات تكرار الطلب الفاشل (انظر [إعادة المحاولة](#safety-retries-and-rate-limits)). القيمة 0 توقف إعادة المحاولة. |
+| `maxRetryDelay(...)` | 30 ثانية | أطول انتظار قبل إعادة المحاولة. |
+| `paceRequests(...)` | `true` | يوزّع الطلبات زمنيًا لتبقى ضمن حدود معدل الطلبات في البوابة (gateway). |
+| `readOnly(...)` | `false` | يمنع كل طلب ليس قراءةً، قبل إرساله. |
+| `userAgent(...)` | `DomainNameAPI-Java/<version>` | ترويسة `User-Agent`. |
+| `httpClient(...)` | العميل الخاص بالحزمة | `java.net.http.HttpClient` الخاص بك (وكيل، TLS، منفّذ). |
+| `executor(...)` | مجمّع خيوط خفية (daemon) مشترك | المكان الذي تعمل فيه دوال `sendAsync`. |
+
+تقرأ `fromEnvironment()` ما يلي:
+
+| المتغير | المعنى |
+|---|---|
+| `DNA_RESELLER_ID`, `DNA_API_KEY` | بيانات الاعتماد. |
+| `DNA_ENV` | `production` أو `ote` (وأيضًا `prod` و`live` و`test` و`sandbox`). |
+| `DNA_TEST_MODE` | القيم `true` أو `1` أو `on` أو `yes` تختار OTE. تُستخدم عند عدم ضبط `DNA_ENV`. |
+| `DNA_BASE_URL` | تجاوز اختياري للعنوان الأساسي. |
+| `DNA_READ_ONLY` | القيمة `true` تفعّل وضع القراءة فقط. |
+
+العميل آمن للاستخدام من عدة خيوط (thread-safe). أنشئ عميلًا واحدًا لكل مجموعة بيانات اعتماد، وأعد استخدامه طوال عمر التطبيق.
+
+<a id="usage"></a>
 
 ## الاستخدام
 
-جميع الأمثلة أدناه متاحة أيضًا كأصناف قابلة للتشغيل في مجلد [examples](examples):
+لكل مجال في API عميله الخاص. تأخذ الدوال وسائط بسيطة؛ ولخيارات أكثر، لكل دالة أيضًا
+نسخة محمّلة (overload) أو دالة شقيقة تأخذ كائن الطلب. وتذكر الدوال التي تخصم من رصيدك ذلك في توثيق Javadoc الخاص بها.
+
+<a id="account"></a>
+
+### الحساب
+
+</div>
+
+```java
+ResellerAccount account = client.account().get();          // resellerId, resellerName, tryBalance, usdBalance
+ResellerProfile profile = client.account().getProfile();   // name, companyName, accountCurrency, status, ...
+
+// This month's charges, across all pages
+ListTransactionsRequest request = new ListTransactionsRequest()
+        .chargeType(ChargeType.SUBTRACT)
+        .startDate(OffsetDateTime.parse("2026-11-01T00:00:00Z"))
+        .transactionTypes(TransactionType.REGISTER, TransactionType.RENEW);
+client.account().listAllTransactions(request).forEach(t ->
+        System.out.println(t.creationTime() + " " + t.type() + " " + t.amount() + " " + t.amountCurrency()));
+```
+
+<div dir="rtl">
+
+<a id="domains"></a>
+
+### النطاقات
+
+**البحث**
+
+</div>
+
+```java
+DomainSearchResult one = client.domains().search("example.com", "USD");
+boolean available = one.info() != null && one.info().isAvailable();
+
+BulkSearchResult many = client.domains().bulkSearch(List.of("example.com", "example.net", "example.com.tr"));
+for (DomainAvailability domain : many.available()) {
+    System.out.println(domain.domainName() + ": " + domain.price() + " " + domain.currency());
+}
+```
+
+<div dir="rtl">
+
+**القوائم والتفاصيل**
+
+</div>
+
+```java
+Page<Domain> page = client.domains().list(new ListDomainsRequest().maxResultCount(50).statuses(DomainStatus.ACTIVE));
+
+client.domains().listAll(new ListDomainsRequest().domainName("example"))
+        .forEach(d -> System.out.println(d.domainName() + " " + d.status() + " " + d.expirationDate()));
+
+DomainDetails details = client.domains().get("example.com");
+System.out.println(details.authCode());
+details.contact(ContactType.REGISTRANT).ifPresent(c -> System.out.println(c.email()));
+```
+
+<div dir="rtl">
+
+**التسجيل والتجديد والنقل والاستعادة** (تخصم من رصيدك)
+
+</div>
+
+```java
+// One contact for all four roles, two years
+client.domains().register("example.com", contact, List.of("tr.apiname.com", "eu.apiname.com"), 2);
+
+// Full control: different contacts per role, registry attributes, trustee service
+client.domains().register(new RegisterDomainRequest("example.com.tr")
+        .period(1)
+        .nameServers("tr.apiname.com", "eu.apiname.com")
+        .contacts(DomainContact.forAllRoles(contact))
+        .tldAttributes(Map.of("<key>", "<value>")));   // the keys: client.products().getTld("com.tr").get().attributes()
+
+// With existing contact handles
+client.domains().registerWithHandle("example.com", "DNA-12345", List.of("tr.apiname.com", "eu.apiname.com"), 1);
+
+RenewalCheck renewal = client.domains().checkRenewal("example.com");   // free
+if (renewal.isRenewable()) {
+    client.domains().renew("example.com", 1);
+}
+
+TransferCheck check = client.domains().checkTransfer("example.com", "EPP-CODE");   // free
+if (check.isTransferable()) {
+    client.domains().transfer("example.com", "EPP-CODE");
+}
+
+client.domains().restore("example.com");
+```
+
+<div dir="rtl">
+
+تُفحص الطلبات قبل إرسالها. التسجيل دون أدوار جهات الاتصال الأربعة جميعها، أو جهة اتصال بلا عنوان بريد إلكتروني،
+أو مدة 0 سنة، يُطلق `IllegalArgumentException`، ولا يصل شيء إلى API.
+
+> [!NOTE]
+> قد تجيب API عن طلب تسجيل أو تجديد أو نقل بحالة HTTP 200 مع `"success": false` (مثلًا عندما ترفض
+> جهة التسجيل (registry) النطاق). تُعيد الحزمة هذه الإجابة كما هي: تحقّق من `DomainOperationResult.success()`
+> و`message()`.
+
+**الإعدادات**
+
+</div>
+
+```java
+client.domains().lock("example.com");
+client.domains().unlock("example.com");
+client.domains().setPrivacyProtection("example.com", true);
+client.domains().setNameServers("example.com", List.of("ns1.example.net", "ns2.example.net"));
+client.domains().setNameServers("example.com", List.of("ns1.example.net"), DnssecMode.DISABLE_DNSSEC);  // a signed domain
+DomainAuthCode authCode = client.domains().updateAuthCode("example.com");
+
+client.domains().updateContacts("example.com", DomainContact.forAllRoles(contact));
+client.domains().setContactHandles("example.com", List.of(new ContactHandle(ContactType.TECH, "DNA-12345")));
+```
+
+<div dir="rtl">
+
+**إعادة توجيه URL وخوادم الأسماء الفرعية والمستندات**
+
+</div>
+
+```java
+client.domains().forwarding().set("example.com", "https://www.example.net", ForwardType.STANDARD);
+DomainForwarding forwarding = client.domains().forwarding().get("example.com");
+client.domains().forwarding().delete("example.com");
+
+// The IP version of each address is detected
+client.domains().childNameServers().add("example.com", "ns1.example.com", "192.0.2.10", "2001:db8::10");
+client.domains().childNameServers().update("example.com", "ns1.example.com", List.of("192.0.2.20"));
+client.domains().childNameServers().delete("example.com", "ns1.example.com");
+
+// Registry documents (mostly .tr)
+client.domains().documents().upload("example.com.tr",
+        List.of(DocumentUpload.fromFile(DocumentType.IDENTITY_CARD, Path.of("id.pdf"))));
+client.domains().documents().listAll("example.com.tr")
+        .forEach(document -> System.out.println(document.name() + ": " + document.status()));
+```
+
+<div dir="rtl">
+
+<a id="contacts"></a>
+
+### جهات الاتصال
+
+معرّفات جهات الاتصال (handles) هي جهات اتصال قابلة لإعادة الاستخدام. أنشئ واحدة مرة واحدة واستخدمها لنطاقات كثيرة.
+
+</div>
+
+```java
+CreateContactResult created = client.contacts().create(contact);
+String handle = created.handle();                                  // for example DNA-12345
+
+ContactDetails details = client.contacts().get(handle);            // the contact and its verification state
+HandleUpdateResult result = client.contacts().update(handle, contact);
+System.out.println(result.stats().successCount() + " of " + result.stats().totalDomainCount() + " domains updated");
+
+List<ContactVerification> verifications = client.contacts().getVerification(handle);
+client.contacts().resendVerification(handle);
+```
+
+<div dir="rtl">
+
+<a id="dns"></a>
+
+### DNS
+
+سجلات المنطقة (zone) للنطاقات الموجودة على خوادم أسماء المنصة. تُحَلّ السجلات علنًا بمجرد أن يستخدم النطاق تلك الخوادم،
+وهذا ما تتولاه `apply`.
+
+</div>
+
+```java
+for (DnsRecordSet set : client.dns().list("example.com")) {
+    System.out.println(set.name() + " " + set.type() + " " + set.ttl() + " " + set.values());
+}
+
+client.dns().add("example.com", "www", RecordType.A, "192.0.2.10");
+client.dns().add("example.com", "@", RecordType.of("txt"), "v=spf1 include:_spf.example.net ~all");   // "txt" becomes TXT
+client.dns().add("example.com", "@", RecordType.MX, List.of("10 mx1.example.net", "20 mx2.example.net"), 3600);
+client.dns().replace("example.com", "www", RecordType.A, List.of("192.0.2.20"), 300);
+client.dns().delete("example.com", "www", RecordType.A, "192.0.2.20");
+
+ZoneApplyResult applied = client.dns().apply("example.com");
+```
+
+<div dir="rtl">
+
+تفحص الحزمة ما سترفضه API: سجل CNAME عند الجذر (apex)، أو قيمة CAA ناقصة الأجزاء الثلاثة، أو TTL خارج النطاق
+1–86400. تُباعَد استدعاءات المنطقة بثانية واحدة، وهي حدّ البوابة.
+
+<a id="dnssec"></a>
+
+### DNSSEC
+
+</div>
+
+```java
+DnssecInfo info = client.dnssec().get("example.com");   // status, dsRecords, allowedAlgorithms, ...
+
+DsRecordData record = DsRecordData.parse("12345 13 2 49FD46E6C4B45C55D4AC69CBD3CD34AC1AFE51DE");
+client.dnssec().add("example.com", record);
+client.dnssec().remove("example.com", record);
+client.dnssec().disable("example.com");                 // removes every DS record
+```
+
+<div dir="rtl">
+
+<a id="ssl"></a>
+
+### SSL
+
+يمكن أن يكون للنطاق الواحد عدة شهادات، ولذلك تُحدَّد الشهادة القائمة عبر **معرّف الشهادة** (من النوع `UUID`)
+لا عبر اسم النطاق أبدًا. تعيد `purchase` و`renew` هذا المعرّف: احتفظ به. وتعثر `list` على معرّفات الشهادات
+التي تملكها بالفعل.
+
+</div>
+
+```java
+// 1. Buy (charges the balance). Product codes come from client.products().listSslProducts().
+List<String> approvers = client.ssl().getApproverEmails("example.com", "PKG-CODE");   // before the purchase
+SslOperationResult order = client.ssl().purchase("example.com", "PKG-CODE");
+UUID certificateId = order.certificateId();             // store it: every later call takes it
+
+// 2. A CSR and private key, if you do not have one
+GeneratedCsr csr = client.ssl().generateCsr(new GenerateCsrRequest("example.com")
+        .country("TR").state("Istanbul").locality("Istanbul").organization("Example Ltd").organizationUnit("IT"));
+
+// 3. Configure within 15 days: CSR, validation method and contact
+client.ssl().configure(new ConfigureCertificateRequest(certificateId, csr.csr(), certificateContact)
+        .validationMethod(ValidationMethod.EMAIL)
+        .approverEmail(approvers.get(0))
+        .webServerType(WebServerType.APACHE));
+
+// 4. Wait for issuance, then download
+CertificateStatus status = client.ssl().refreshStatus(certificateId);
+if (status.isIssued()) {
+    CertificateContent content = client.ssl().getContent(certificateId);
+    Files.writeString(Path.of("fullchain.pem"), content.fullChain());
+}
+
+CertificateDetails details = client.ssl().get(certificateId);   // subscription, configuration, contacts
+client.ssl().reissue(new ReissueCertificateRequest(certificateId).csr(newCsr).privateKey(newKey));
+client.ssl().revoke(certificateId);                              // cannot be undone
+```
+
+<div dir="rtl">
+
+**عرض الشهادات والعثور على المعرّف**
+
+</div>
+
+```java
+Page<CertificateListItem> page = client.ssl().list(new ListCertificatesRequest().domainName("example.com"));   // newest first
+
+client.ssl().listAll().forEach(c ->
+        System.out.println(c.certificateId() + " " + c.domainName() + " " + c.status() + " " + c.subscriptionExpiresAt()));
+
+// The approver addresses of a certificate you already have
+List<String> approverEmails = client.ssl().getApproverEmails(certificateId);
+```
+
+<div dir="rtl">
+
+**التجديد** (يخصم من رصيدك)
+
+</div>
+
+```java
+// Allowed from 30 days before details.subscription().expiresAt(). The renewal is a new certificate with its own ID.
+SslOperationResult renewal = client.ssl().renew(certificateId);
+client.ssl().configure(new ConfigureCertificateRequest(renewal.certificateId(), newCsr, certificateContact)
+        .validationMethod(ValidationMethod.EMAIL)
+        .approverEmail(approvers.get(0))
+        .webServerType(WebServerType.APACHE));
+```
+
+<div dir="rtl">
+
+يجب إعداد الشهادة المشتراة أو المجدَّدة خلال 15 يومًا، وإلا أُلغيت. للتجديد استدعِ `renew` ثم `configure`
+بالمعرّف الجديد. لا تشترِ مجددًا عبر `purchase`: فذلك شراء مستقل بسعر الشراء، ولن توسَم الشهادة القديمة بأنها
+مجدَّدة أبدًا. معرّف الشهادة الفارغ يُطلق `IllegalArgumentException` قبل إرسال أي شيء.
+
+<a id="hosting"></a>
+
+### الاستضافة
+
+</div>
+
+```java
+List<HostingPackage> packages = client.hosting().listPackages();
+HostingCreateResult created = client.hosting().create("example.com", "starter-linux");   // charges the balance
+HostingStatus status = client.hosting().getStatus("example.com");                         // panel access once ready
+HostingService hosting = client.hosting().get("example.com");
+List<ServicePlan> plans = client.hosting().listPlans();
+```
+
+<div dir="rtl">
+
+<a id="orders-and-products"></a>
+
+### الطلبات والمنتجات
+
+</div>
+
+```java
+Order order = client.orders().get("ORDER-CODE");
+
+client.products().getTld("com").ifPresent(com -> System.out.println(
+        com.registrationPrice(1).map(Tld.Price::price).orElse(null) + ", DNSSEC: " + com.supportsDnssec()));
+
+client.products().listAllTlds(new ListTldsRequest().currency("USD")).forEach(tld -> System.out.println(tld.name()));
+
+ProductPrice price = client.products().getPrice("com", OrderType.RENEW, 1);
+Page<SslProduct> ssl = client.products().listSslProducts(new ListSslProductsRequest().isWildcard(true));
+```
+
+<div dir="rtl">
+
+<a id="requests-and-baserequest"></a>
+
+## الطلبات و`BaseRequest`
+
+كل عملية هي فئة طلب، مثل `RenewDomainRequest` أو `ListDomainsRequest` أو `AddDnsRecordRequest`.
+تبنيها لك دوال العميل المذكورة أعلاه، ويمكنك أيضًا إنشاؤها وإرسالها بنفسك:
+
+</div>
+
+```java
+RenewDomainRequest request = new RenewDomainRequest("example.com", 2);
+System.out.println(request + " is " + request.safety());   // "POST domains/renew is BILLABLE"
+
+DomainOperationResult result = client.send(request);
+
+// The same, with the HTTP details: correlation ID, soft-quota state, attempts, duration
+ApiResponse<DomainOperationResult> response = client.sendWithResponse(request);
+System.out.println(response.correlationId() + " quota " + response.quota());
+```
+
+<div dir="rtl">
+
+تشتق جميع الطلبات من إحدى فئتين أساسيتين:
+
+| الفئة الأساسية | الغرض |
+|---|---|
+| `BaseRequest<T>` | كل العمليات. `T` هو نوع الإجابة؛ و`Void` للعمليات التي لا تُعيد شيئًا (قفل، فك القفل، إضافة سجل DNS، ...). |
+| `PagedRequest<T>` | عمليات القوائم. تضيف `skipCount` و`maxResultCount` و`sorting`، وتعمل مع `listAll`. |
+
+يصف الطلبُ نفسه عبر بضع دوال مُعاد تعريفها (overrides): `method()`، و`path()` (تحت `/api/v1/`)، و`safety()`. تُضاف
+معاملات الاستعلام في `addQueryParameters`، ويأتي جسم JSON من `body()` (يبني `JsonBody` جسمًا مع حذف القيم
+null)، وتوضع الفحوص التي تسبق الإرسال في `validate()`. لاستدعاء نقطة نهاية لا تغطيها الحزمة بعد، اكتب طلبك الخاص:
+
+</div>
+
+```java
+public final class GetDomainNotesRequest extends BaseRequest<DomainNotes> {
+    private final String domainName;
+
+    public GetDomainNotesRequest(String domainName) {
+        this.domainName = domainName;
+    }
+
+    @Override public HttpMethod method() { return HttpMethod.GET; }
+    @Override public String path() { return "domains/notes"; }               // below /api/v1/
+    @Override public OperationSafety safety() { return OperationSafety.READ; }
+
+    @Override protected void addQueryParameters(QueryParameters query) {
+        query.add("DomainName", domainName);
+    }
+
+    @Override protected void validate() {
+        require(domainName, "domainName");
+    }
+}
+
+public record DomainNotes(List<String> notes) { }
+
+DomainNotes notes = client.send(new GetDomainNotesRequest("example.com"));
+```
+
+<div dir="rtl">
+
+يحصل طلبك على كل ما تحصل عليه الطلبات المدمجة: بيانات الاعتماد، وإعادة المحاولة بحسب فئة الأمان، وتنظيم وتيرة الطلبات، ووضع القراءة فقط،
+ومعالجة الأخطاء. يُستنتج نوع الإجابة من `extends BaseRequest<DomainNotes>`؛ ولا تُعِد تعريف `responseType()` إلا لفئات
+الطلبات العامة (generic). وأعد تعريف `isIdempotent()` عندما يكون تكرار عملية الكتابة آمنًا.
+
+<a id="errors"></a>
+
+## الأخطاء
+
+كل طلب فاشل يُطلق `DomainNameApiException` (غير مُتحقَّق منه، unchecked). أما الوسائط غير الصالحة فتُطلق
+`IllegalArgumentException` قبل إرسال أي شيء.
+
+</div>
+
+```java
+try {
+    client.domains().renew("example.com", 1);
+} catch (DomainNameApiException e) {
+    if (e.kind() == ApiErrorKind.VALIDATION) {
+        System.out.println(e.code() + ": " + e.getMessage());   // Dna.DomainService:Domain:10007: ...
+        e.validationErrors().forEach(field -> System.out.println("  " + field));
+    } else if (e.isOutcomeUnknown()) {
+        // A billable or changing request failed on the network: it may have reached the API.
+        // Check the state before sending it again.
+        DomainDetails details = client.domains().get("example.com");
+    } else {
+        throw e;
+    }
+}
+```
+
+<div dir="rtl">
+
+| الدالة | المعنى |
+|---|---|
+| `kind()` | تصنيف ثابت (الجدول أدناه). اتخذ قراراتك بناءً عليه، لا على الرسالة. |
+| `code()` | رمز الخطأ من API (مثل `Dna.DomainService:Domain:10007`)، أو أحد رموز الحزمة أدناه. |
+| `getMessage()` | ما الذي حدث. تُستبدل الرسائل الجاهزة العامة بتفاصيل API. |
+| `statusCode()` | حالة HTTP، أو null إن لم تصل أي إجابة. |
+| `details()`, `validationErrors()` | تفاصيل إضافية ومشكلات على مستوى الحقول من API. |
+| `correlationId()` | قيمة `X-Correlation-Id` من البوابة. اذكرها عند التواصل مع الدعم. |
+| `hint()` | اقتراح قصير بما يجب فعله بعد ذلك. |
+| `isRetryable()` | هل يمكن أن ينجح تكرار الطلب نفسه لاحقًا. |
+| `isOutcomeUnknown()` | فشل طلب يُغيّر شيئًا بسبب الشبكة، فقد يكون قد نُفّذ. |
+| `operation()`, `safety()` | الطلب الفاشل (`POST domains/renew`) وفئة الأمان الخاصة به. |
+| `retryAfter()`, `responseBody()` | قيمة `Retry-After` من البوابة والإجابة الخام. |
+
+| `kind()` | متى |
+|---|---|
+| `AUTHENTICATION` | بيانات اعتماد خاطئة أو مفقودة، أو موزّع غير معروف أو موقوف في هذه البيئة (401، إعادة توجيه). |
+| `FORBIDDEN` | مصادَق عليه لكن غير مسموح له (403). |
+| `NOT_FOUND` | النطاق أو جهة الاتصال أو الطلب أو أي مورد آخر غير موجود (404). |
+| `VALIDATION` | رفضت API المدخلات أو فشلت قاعدة عمل: حقل غير صالح، أو نطاق مقفل، أو رصيد غير كافٍ (400، 422). |
+| `CONFLICT` | حالة المورد لا تسمح بالعملية (409). |
+| `RATE_LIMITED` | ما زال الطلب محدودًا بمعدل الطلبات بعد إعادة المحاولة التلقائية (429). |
+| `SERVER` | فشل من جهة الخادم (5xx). غالبًا مؤقت. |
+| `NETWORK`, `TIMEOUT` | لا إجابة: DNS أو TLS أو وكيل (proxy) أو إعادة ضبط الاتصال، أو لا إجابة خلال المهلة الزمنية. |
+| `READ_ONLY` | مُنع بسبب وضع القراءة فقط؛ ولم يُرسَل شيء. |
+| `UNKNOWN` | أي حالة أخرى، بما فيها إجابة لم تستطع الحزمة قراءتها. |
+
+الرموز التي تضبطها الحزمة بنفسها:
+
+| الرمز | المعنى |
+|---|---|
+| `INVALID_RESELLER` | أعادت البوابة التوجيه إلى صفحة الإيقاف: معرّف الموزّع غير معروف أو غير نشط أو موقوف **في هذه البيئة**. |
+| `INVALID_API_KEY` | المفتاح لا يطابق الموزّع. مفاتيح الإنتاج وOTE مختلفة. |
+| `MISSING_API_KEY`, `MISSING_RESELLER_ID`, `NO_CREDENTIALS` | إحدى بيانات الاعتماد فارغة. |
+| `SUBRESELLER_NOT_ALLOWED` | لا يمكن لحسابات الموزّعين الفرعيين استخدام API. استخدم بيانات اعتماد الموزّع الرئيسي. |
+| `UNAUTHORIZED` | أي 401 آخر. |
+| `RATE_LIMITED` | 429 بعد إعادة المحاولة. |
+| `NETWORK`, `TIMEOUT` | لم تصل أي إجابة. |
+| `READ_ONLY` | مُنع بسبب وضع القراءة فقط. |
+| `EMPTY_RESPONSE`, `INVALID_RESPONSE` | كانت الإجابة الناجحة فارغة أو تعذّرت قراءتها. |
+| `HTTP_<status>` | لم ترسل API رمز خطأ. |
+
+عند مقاطعة الخيط (thread) أثناء انتظار أحد الطلبات، تعيد الحزمة ضبط علامة المقاطعة (interrupt flag) وتُطلق
+`CancellationException` بدلًا من خطأ API.
+
+<a id="safety-retries-and-rate-limits"></a>
+
+## الأمان وإعادة المحاولة وحدود معدل الطلبات
+
+لكل طلب فئة أمان، وهي نفسها التي تستخدمها أداة `dna` CLI:
+
+| `OperationSafety` | تعني | أمثلة |
+|---|---|---|
+| `READ` | بلا آثار جانبية، حتى لو استخدمت API الأسلوب POST أو PUT | البحث، التفاصيل، القوائم، فحوص التجديد والنقل، إنشاء CSR |
+| `WRITE` | تغيير مجاني يمكن التراجع عنه | سجلات DNS، القفل، الخصوصية، خوادم الأسماء، جهات الاتصال |
+| `BILLABLE` | يخصم من رصيدك | التسجيل، التجديد، النقل، الاستعادة، شراء SSL وتجديده، طلب استضافة |
+| `DESTRUCTIVE` | يحذف شيئًا أو يصعب التراجع عنه | حذف سجل DNS، إزالة DNSSEC، إلغاء شهادة |
+
+- **وضع القراءة فقط** (‏`readOnly(true)` أو `DNA_READ_ONLY=true`) يمنع كل ما ليس `READ` قبل إرساله.
+  استخدمه أثناء الاستكشاف، وفي التقارير ولوحات المعلومات.
+- **إعادة المحاولة.** تُعاد محاولة إجابات 429 دائمًا، مع احترام `Retry-After`. وهذا آمن حتى للطلبات المدفوعة، لأن
+  البوابة ترفضها قبل تنفيذ أي شيء. أما أخطاء الشبكة والمهلات وإجابات 502/503/504 فتُعاد محاولتها لعمليات القراءة فقط
+  (ولعمليات الكتابة التي يكون تكرارها آمنًا، مثل استبدال خوادم الأسماء). لا يُرسَل التسجيل أو التجديد مرتين أبدًا.
+- **تنظيم وتيرة الطلبات.** تسمح البوابة بـ 5 طلبات في الثانية لكل مفتاح، و2 في الثانية لعمليات البحث عن النطاقات، و20 في الثانية
+  لاستدعاءات منطقة DNS. يباعد العميل بين الطلبات ليبقى ضمن هذه الحدود (وبين استدعاءات المنطقة بثانية واحدة). معلومات النطاق وقائمة
+  TLD غير محدودتين بمعدل الطلبات.
+- **الحصة المرنة (soft quota).** تكلّف عمليات البحث والاستعلام عن المعلومات نقطة واحدة، وكل ما عداها 10 نقاط. بعد تجاوز 200 نقطة تبطئ البوابة كل
+  طلب بما يصل إلى 5 ثوانٍ؛ وتتناقص النقاط بنسبة 20% في الدقيقة. تعرض `sendWithResponse` الحالة في `quota()`.
+
+<a id="asynchronous-calls"></a>
+
+## الاستدعاءات غير المتزامنة
+
+العميل متزامن: كل دالة تنتظر (blocking) حتى تصل الإجابة، وهو ما يناسب شيفرة الخوادم والخيوط الافتراضية (virtual threads).
+أما `sendAsync` و`sendWithResponseAsync` فتشغّلان الطلب على منفّذ (executor) العميل وتُعيدان `CompletableFuture`:
+
+</div>
+
+```java
+CompletableFuture<DomainDetails> details = client.sendAsync(new GetDomainRequest("example.com"));
+details.thenAccept(d -> System.out.println(d.expirationDate()));
+```
+
+<div dir="rtl">
+
+يفشل الـ future بالاستثناءات نفسها التي تُطلقها الدوال المتزامنة (مغلّفةً في `CompletionException` عند استدعاء
+`join()`). اضبط منفّذك الخاص عبر `builder().executor(...)`، مثل `Executors.newVirtualThreadPerTaskExecutor()`
+على Java 21.
+
+<a id="testing-your-code"></a>
+
+## اختبار شيفرتك
+
+لا تحتاج الحزمة إلا إلى نقطة نهاية HTTP. لاختبار الشيفرة التي تستخدمها دون استدعاء API، وجّه `baseUri` إلى خادم
+محلي، مثل الخادم المدمج في JDK:
+
+</div>
+
+```java
+HttpServer server = HttpServer.create(new InetSocketAddress(InetAddress.getLoopbackAddress(), 0), 0);
+server.createContext("/api/v1/deposit/accounts/me", exchange -> {
+    byte[] body = "{\"resellerName\":\"Test\",\"usdBalance\":10}".getBytes(StandardCharsets.UTF_8);
+    exchange.sendResponseHeaders(200, body.length);
+    exchange.getResponseBody().write(body);
+    exchange.close();
+});
+server.start();
+
+DomainNameApiClient client = DomainNameApiClient.builder()
+        .credentials("test", "test")
+        .baseUri(URI.create("http://127.0.0.1:" + server.getAddress().getPort()))
+        .paceRequests(false)
+        .build();
+
+ResellerAccount account = client.account().get();   // usdBalance() == 10
+```
+
+<div dir="rtl">
+
+يمكنك أيضًا تمرير فئة فرعية خاصة بك من `HttpClient` عبر `httpClient(...)`، وإنشاء استثناءات لكائناتك الوهمية (mocks) عبر
+`DomainNameApiException.builder(...)`. للاختبار على API الحقيقية، استخدم OTE بمفتاحها الخاص.
+
+<a id="project-layout"></a>
+
+## بنية المشروع
+
+</div>
+
+```
+src/main/java/io/github/domainreseller/dna/
+├── DomainNameApiClient.java   The entry point: builder, area clients, send, retries, pacing
+├── BaseRequest, PagedRequest, QueryParameters, JsonBody, Page, ApiResponse, DomainNameApiException, enums
+├── internal/                  JSON settings, error parsing, the rate-limit pacer (not public API)
+├── accounts/   AccountClient  Balances, profile and transactions
+├── contacts/   ContactsClient Contact handles
+├── domains/    DomainsClient  Domains, plus forwarding(), childNameServers() and documents()
+├── dns/        DnsClient      Zone records
+├── dnssec/     DnssecClient   DS records
+├── ssl/        SslClient      Certificates
+├── hosting/    HostingClient  Hosting packages and services
+├── orders/     OrdersClient   Orders
+└── products/   ProductsClient TLDs, SSL products and prices
+```
+
+<div dir="rtl">
+
+لكل حزمة (package) مجال الشكل نفسه: `XxxClient`، وفئة طلب واحدة لكل عملية (`XxxRequest`)، والنماذج
+والقيم المُعدَّدة (enums) الخاصة بإجاباتها.
+
+<a id="development"></a>
+
+## التطوير
+
+</div>
 
 ```bash
-mvn -Pexamples -DskipTests compile
-DNA_RESELLER_ID=... DNA_API_KEY=... java -cp target/classes GetDetails
+mvn verify                          # build and run the tests
+mvn -Pexamples -DskipTests compile  # also compile the examples
 ```
 
-### تسجيل النطاق
+<div dir="rtl">
 
-ملاحظة: نطاقات .tr تتطلب مُعاملات إضافية. يُستخدم المُعامِل `additionalAttributes`
-لأسماء النطاقات التي تحتاج إلى معلومات إضافية، مثل .tr.
+إن لم يكن لديك JDK محلي، فاستخدم Docker:
 
-```java
-Map<String, Object> contact = new LinkedHashMap<>();
-contact.put("FirstName", "John");
-contact.put("LastName", "Doe");
-contact.put("Company", "Example Corp");
-contact.put("EMail", "john.doe@example.com");
-contact.put("AddressLine1", "123 Lorem Street");
-contact.put("AddressLine2", "Suite 456");
-contact.put("City", "Springfield");
-contact.put("Country", "US");
-contact.put("Fax", "1234567890");
-contact.put("FaxCountryCode", "1");
-contact.put("Phone", "9876543210");
-contact.put("PhoneCountryCode", 1);
-contact.put("ZipCode", "12345");
-contact.put("State", "IL");
-
-Map<String, Object> contacts = new LinkedHashMap<>();
-contacts.put("Administrative", contact);
-contacts.put("Billing", contact);
-contacts.put("Technical", contact);
-contacts.put("Registrant", contact);
-
-Map<String, Object> result = dna.registerWithContactInfo(
-    "example.com",
-    1,                                                  // المدة (بالسنوات)
-    contacts,
-    Arrays.asList("ns1.example.com", "ns2.example.com"), // قائمة فارغة = ns1/ns2.domainnameapi.com
-    true,                                               // قفل المسجِّل
-    false                                               // حماية الخصوصية
-);
-
-// نطاقات .tr: سمات TRABIS كمُعامِل سابع
-Map<String, Object> trabis = new LinkedHashMap<>();
-trabis.put("TRABISDOMAINCATEGORY", 1);           // 1 = فرد (Owner)، 0 = شركة (Corporate)
-trabis.put("TRABISCITIZIENID", "11111111111");   // فرد: رقم الهوية الوطنية
-// شركة: trabis.put("TRABISTAXOFFICE", "Istanbul VD"); trabis.put("TRABISTAXNUMBER", "1234567890");
-dna.registerWithContactInfo("example.com.tr", 1, contacts,
-    Arrays.asList("ns1.example.com", "ns2.example.com"), true, false, trabis);
-```
-
-يمكن أن تكون جهات الاتصال مسطّحة (`AddressLine1`، `Phone`، `PhoneCountryCode`) أو متداخلة
-(`Address.Line1`، `Phone.Phone.Number`). تُستكمَل الحقول الناقصة أو غير المنتظمة وتُوحَّد صيغتها
-قبل الإرسال (راجع `validateContact`).
-
-<details>
-<summary>مثال على المخرجات</summary>
-
-```json
-{
-    "data": {
-        "ID": 0,
-        "Status": "Active",
-        "DomainName": "",
-        "AuthCode": "",
-        "LockStatus": "false",
-        "PrivacyProtectionStatus": "false",
-        "IsChildNameServer": "false",
-        "Contacts": {
-            "Billing": {"ID": 0},
-            "Technical": {"ID": 0},
-            "Administrative": {"ID": 0},
-            "Registrant": {"ID": 0}
-        },
-        "Dates": {"Start": "", "Expiration": "2027-11-09T12:00:00", "RemainingDays": 366},
-        "NameServers": [],
-        "Additional": [],
-        "ChildNameServers": []
-    },
-    "result": "OK"
-}
-```
-تُجيب نقطة نهاية التسجيل بإيصال مختصر؛ استدعِ `getDetails` بعد ذلك للحصول على السجل الكامل.
-عندما ترفض البوابة الطلب (`"success": false`)، تكون النتيجة خطأً بالرمز
-`REGISTER_DOMAIN` مع رسالة البوابة.
-</details>
-
-### تجديد النطاق
-
-```java
-Map<String, Object> result = dna.renew("example.com", 1);
-```
-
-<details>
-<summary>مثال على المخرجات</summary>
-
-```json
-{"result": "OK", "data": {"ExpirationDate": "2027-11-09T12:00:00"}}
-```
-يُعيد التجديد المرفوض خطأً بالرمز `RENEW_DOMAIN`.
-</details>
-
-### نقل النطاق
-
-```java
-// لا تُرسَل جهات الاتصال أبدًا مع النقل: يتسلّمها المسجِّل مع النطاق
-Map<String, Object> result = dna.transfer("example.com", "Xjk9Vtr2", 1);
-
-// تحقّق أولًا مما إذا كان يمكن نقل النطاق باستخدام رمز التفويض هذا
-Map<String, Object> check = dna.checkTransfer("example.com", "Xjk9Vtr2");
-
-// عمليات النقل المعلّقة
-dna.cancelTransfer("example.com");   // واردة
-dna.approveTransfer("example.com");  // صادرة
-dna.rejectTransfer("example.com");   // صادرة
-```
-
-<details>
-<summary>مثال على المخرجات</summary>
-
-تُعيد `transfer` البنية نفسها التي يُعيدها التسجيل (أو خطأً بالرمز `TRANSFER_DOMAIN` عندما
-ترفض البوابة النقل). أما `checkTransfer`:
-
-```json
-{
-    "result": "OK",
-    "data": {
-        "TransferAvailabilityStatus": true,
-        "AuthCodeIsRequired": true,
-        "AuthCodeIsValid": true,
-        "UserTransferRequired": false,
-        "TransferLock": false,
-        "Message": "Domain can be transferred",
-        "MessageKey": "TransferAvailable",
-        "Additional": []
-    }
-}
-```
-عندما يكون النطاق غير قابل للنقل تكون قيمة `result` هي `"ERROR"` وقيمة
-`error` هي `{"Code": "TRANSFER_NOT_AVAILABLE", "Message": "Domain is locked", "Details": "TransferLocked"}`.
-وتُعيد `cancelTransfer` / `approveTransfer` / `rejectTransfer` القيمة
-`{"result": "OK", "data": {"DomainName": "example.com", "Status": "Cancelled"}}`
-(أو `Approved` / `Rejected`).
-</details>
-
-### قائمة النطاقات
-
-```java
-Map<String, Object> all = dna.getList();   // أول 200 نطاق
-
-Map<String, Object> filters = new LinkedHashMap<>();
-filters.put("PageNumber", 0);               // يبدأ الترقيم من 0
-filters.put("PageSize", 50);
-filters.put("OrderColumn", "ExpirationDate");
-filters.put("OrderDirection", "DESC");
-filters.put("DomainName", "example");
-Map<String, Object> page = dna.getList(filters);
-```
-
-<details>
-<summary>مثال على المخرجات</summary>
-
-```json
-{
-    "data": {
-        "Domains": [
-            {
-                "ID": 11,
-                "Status": "Active",
-                "DomainName": "example.com",
-                "AuthCode": "",
-                "LockStatus": "true",
-                "PrivacyProtectionStatus": "true",
-                "IsChildNameServer": "false",
-                "Contacts": {
-                    "Billing": {"ID": ""},
-                    "Technical": {"ID": ""},
-                    "Administrative": {"ID": ""},
-                    "Registrant": {"ID": ""}
-                },
-                "Dates": {"Start": "2024-03-15T10:20:30", "Expiration": "2027-03-15T10:20:30", "RemainingDays": 126},
-                "NameServers": ["ns1.example.net", "ns2.example.net"],
-                "Additional": [],
-                "ChildNameServers": []
-            }
-        ]
-    },
-    "result": "OK",
-    "TotalCount": 1
-}
-```
-</details>
-
-### قائمة امتدادات النطاقات (TLD)
-
-```java
-Map<String, Object> result = dna.getTldList(100);   // القيمة الافتراضية 20
-```
-
-<details>
-<summary>مثال على المخرجات</summary>
-
-```json
-{
-    "data": [
-        {
-            "id": 1,
-            "status": "Active",
-            "maxchar": 63,
-            "maxperiod": 10,
-            "minchar": 1,
-            "minperiod": 1,
-            "tld": "aero",
-            "pricing": {
-                "registration": {"1": "44.9900", "2": "94.9100", "3": "144.8300"},
-                "renew": {"1": "49.9200", "2": "99.8400"},
-                "transfer": {"1": "44.9900"}
-            },
-            "currencies": {"registration": "USD", "renew": "USD", "transfer": "USD"}
-        }
-    ],
-    "result": "OK"
-}
-```
-</details>
-
-### التحقق من توفر النطاق
-
-```java
-Object result = dna.checkAvailability(
-    Arrays.asList("example", "example2"),  // الأسماء بدون الامتداد
-    Arrays.asList("com", "net"),           // الامتدادات، مع النقطة أو بدونها
-    1,                                     // المدة
-    "create"                               // الأمر (الافتراضي "create")
-);
-if (result instanceof List) {
-    for (Object row : (List<?>) result) { /* ... */ }
-}
-```
-
-بحد أقصى 20 تركيبة من (النطاق × الامتداد) في كل استدعاء (حدّ البوابة).
-
-<details>
-<summary>مثال على المخرجات</summary>
-
-```json
-[
-    {
-        "TLD": "com",
-        "DomainName": "example",
-        "Status": "notavailable",
-        "Command": "create",
-        "Period": 1,
-        "IsFee": false,
-        "Price": "11.9900",
-        "Currency": "USD",
-        "Reason": "Domain exists"
-    },
-    {
-        "TLD": "net",
-        "DomainName": "example2",
-        "Status": "available",
-        "Command": "create",
-        "Period": 1,
-        "IsFee": false,
-        "Price": "13.9900",
-        "Currency": "USD",
-        "Reason": null
-    }
-]
-```
-</details>
-
-### تفاصيل النطاق
-
-```java
-Map<String, Object> result = dna.getDetails("example.com");
-Map<String, Object> fresh  = dna.syncFromRegistry("example.com"); // البنية نفسها
-```
-
-<details>
-<summary>مثال على المخرجات</summary>
-
-```json
-{
-    "data": {
-        "ID": 4321,
-        "Status": "Active",
-        "DomainName": "example.com",
-        "AuthCode": "Ab1!xyZ9",
-        "LockStatus": "true",
-        "PrivacyProtectionStatus": "false",
-        "IsChildNameServer": "true",
-        "Contacts": {
-            "Billing": {"ID": "DNA-B-4"},
-            "Technical": {"ID": "DNA-T-3"},
-            "Administrative": {"ID": "DNA-A-2"},
-            "Registrant": {"ID": "DNA-R-1"}
-        },
-        "Dates": {"Start": "2024-03-15T10:20:30", "Expiration": "2027-03-15T10:20:30", "RemainingDays": 126},
-        "NameServers": ["ns1.example.net", "ns2.example.net"],
-        "Additional": {"TRABISDOMAINCATEGORY": "1"},
-        "ChildNameServers": [
-            {"ns": "ns1.example.com", "ip": "192.0.2.11"},
-            {"ns": "ns2.example.com", "ip": ""}
-        ]
-    },
-    "result": "OK"
-}
-```
-</details>
-
-### تعديل خوادم الأسماء
-
-```java
-Map<String, Object> result = dna.modifyNameServer("example.com",
-    Arrays.asList("ns1.example.com", "ns2.example.com"));
-```
-
-تُزال المسافات الزائدة من الإدخالات وتُحوَّل إلى أحرف صغيرة وتُحذف المكررات قبل الإرسال. ويُقبل أيضًا
-كائن `Map` (تُستخدم قيمه).
-
-<details>
-<summary>مثال على المخرجات</summary>
-
-```json
-{"result": "OK", "data": {"NameServers": ["ns1.example.com", "ns2.example.com"]}}
-```
-</details>
-
-### تفعيل / تعطيل قفل النطاق
-
-```java
-dna.enableTheftProtectionLock("example.com");
-dna.disableTheftProtectionLock("example.com");
-```
-
-<details>
-<summary>مثال على المخرجات</summary>
-
-```json
-{"result": "OK", "data": {"LockStatus": true}}
-```
-</details>
-
-### خوادم الأسماء الفرعية (Child Nameservers)
-
-```java
-dna.addChildNameServer("example.com", "ns1.example.com", "192.0.2.10");
-dna.modifyChildNameServer("example.com", "ns1.example.com", "192.0.2.20");
-dna.deleteChildNameServer("example.com", "ns1.example.com");
-```
-
-<details>
-<summary>مثال على المخرجات</summary>
-
-```json
-{"result": "OK", "data": {"NameServer": "ns1.example.com", "IPAdresses": ["192.0.2.10"]}}
-```
-تُعيد `deleteChildNameServer` القيمة `{"result": "OK", "data": {"NameServer": "ns1.example.com"}}`.
-</details>
-
-### تعديل خصوصية النطاق
-
-```java
-Map<String, Object> result = dna.modifyPrivacyProtectionStatus("example.com", true);
-
-// يمكن أن تكون الحالة نصًا أيضًا كما تخزّنها لوحات التحكم: القيم "1", "true", "on", "yes" تُفعّلها
-dna.modifyPrivacyProtectionStatus("example.com", "off");
-```
-
-يُقبَل الوسيط الثالث الاختياري (`reason`) للتوافق مع php-dna لكنه لا يُرسَل، إذ لا تحتوي
-البوابة على حقل كهذا.
-
-<details>
-<summary>مثال على المخرجات</summary>
-
-```json
-{"data": {"PrivacyProtectionStatus": true}, "result": "OK"}
-```
-</details>
-
-### جهات اتصال النطاق
-
-```java
-Map<String, Object> current = dna.getContacts("example.com");
-
-Map<String, Object> contacts = new LinkedHashMap<>();
-contacts.put("Administrative", contact);
-contacts.put("Billing", contact);
-contacts.put("Technical", contact);
-contacts.put("Registrant", contact);
-Map<String, Object> saved = dna.saveContacts("example.com", contacts);
-```
-
-<details>
-<summary>مثال على المخرجات</summary>
-
-```json
-{
-    "data": {
-        "contacts": {
-            "Administrative": {
-                "ID": "DNA-A-2",
-                "Status": "Active",
-                "AuthCode": "",
-                "FirstName": "Grace",
-                "LastName": "Hopper",
-                "Company": "",
-                "EMail": "grace@example.com",
-                "Type": "Administrative",
-                "Address": {
-                    "Line1": "Example Street 2",
-                    "Line2": "",
-                    "Line3": "",
-                    "State": "DC",
-                    "City": "Washington",
-                    "Country": "US",
-                    "ZipCode": "20001"
-                },
-                "Phone": {
-                    "Phone": {"Number": "2025550100", "CountryCode": "1"},
-                    "Fax": {"Number": "2025550101", "CountryCode": "1"}
-                },
-                "Additional": []
-            },
-            "Billing": {"...": "..."},
-            "Registrant": {"...": "..."},
-            "Technical": {"...": "..."}
-        }
-    },
-    "result": "OK"
-}
-```
-تُطابَق أنواع جهات الاتصال دون تمييز بين الأحرف الكبيرة والصغيرة (`Admin`/`Administrative`، `Tech`/`Technical`،
-`Registrant`/`Owner`، `Billing`)؛ ويُحتفَظ بأي نوع آخر يُعيده السجل بعد هذه الأنواع الأربعة.
-تُعيد `saveContacts` القيمة `{"result": "OK", "data": {"contacts": {...}}}`.
-</details>
-
-### سجلات منطقة DNS
-
-تخزّن البوابة السجلات على شكل مجموعات (الاسم + النوع). كتابة مجموعة تستبدل جميع قيمها، و
-الحذف بأي قيمة يزيل المجموعة بأكملها. الدوال المساعدة على مستوى القيمة أدناه تتولى القراءة والدمج والكتابة
-نيابةً عنك.
-
-```java
-// عرض القائمة (صف واحد لكل قيمة)
-dna.getResourceRecords("example.com");
-
-// إضافة / استبدال / إزالة قيمة واحدة مع الإبقاء على القيم الأخرى
-dna.addResourceRecordValue("example.com", "@", "MX", "30 mx3.example.com");
-dna.replaceResourceRecordValue("example.com", "www", "A", "192.0.2.10", "192.0.2.20");
-dna.removeResourceRecordValue("example.com", "@", "MX", "30 mx3.example.com");
-
-// جعل المجموعة تحتوي على هذه القيم بالضبط (القائمة الفارغة تزيلها)
-dna.setResourceRecordSet("example.com", "@", "TXT", Arrays.asList("v=spf1 -all"), 3600);
-dna.deleteResourceRecordSet("example.com", "old", "CNAME");
-
-// المستوى المنخفض: التجهيز مع apply=false ثم التثبيت مرة واحدة
-dna.addResourceRecord("example.com", "api", "A", "192.0.2.7", 300, false);
-dna.editResourceRecord("example.com", "www", "www", "A", "192.0.2.6", 600, false);
-dna.deleteResourceRecord("example.com", "test.example.com.", "192.0.2.9", "A", false);
-dna.applyResourceRecords("example.com");
-```
-
-يمكن أن تكون الأسماء `""` / `"@"` (جذر النطاق)، أو تسمية (`"www"`)، أو اسمًا كاملًا (`"www.example.com."`).
-الأنواع المدعومة: `A, AAAA, ALIAS, CAA, CNAME, DS, MX, NAPTR, PTR, SRV, TLSA, TXT`. قيمة TTL بين
-1 و86400 ثانية. يُحافَظ على فاصل ثانية واحدة على الأقل بين استدعاءات المنطقة لأن البوابة تُجيب
-بـ HTTP 429 على الطلبات المتلاحقة (يمكن تغيير الفاصل عبر `setZoneMinInterval(seconds)`). تُبيّن النتائج
-النوع بالأحرف الكبيرة وقيمة TTL بعد حصرها ضمن الحدود المسموحة، كما أُرسلا. وعندما يفشل التطبيق التلقائي، تُعيد عملية الكتابة
-خطأ التطبيق: يكون التغيير مُجهّزًا لكنه لم يُفعَّل بعد.
-
-<details>
-<summary>مثال على المخرجات</summary>
-
-```json
-{
-    "result": "OK",
-    "data": {
-        "records": [
-            {"Name": "example.com.", "Type": "A", "TTL": 3600, "Content": "192.0.2.1", "Disabled": false},
-            {"Name": "www.example.com.", "Type": "CNAME", "TTL": 300, "Content": "example.com.", "Disabled": false},
-            {"Name": "example.com.", "Type": "MX", "TTL": 3600, "Content": "10 mx1.example.com.", "Disabled": false}
-        ]
-    }
-}
-```
-`addResourceRecordValue`:
-`{"result": "OK", "data": {"Name": "", "Type": "MX", "TTL": 3600, "Contents": ["10 mx1.example.com.", "30 mx3.example.com"]}}`
-— وعندما تكون القيمة موجودة مسبقًا: `{..., "Contents": [...], "Changed": false}`.
-</details>
-
-### إعادة توجيه URL
-
-```java
-dna.setForwarding("example.com", "https://www.example.org");           // إعادة توجيه قياسية
-dna.setForwarding("example.com", "https://www.example.org", "Frame");  // مقنّعة
-dna.getForwarding("example.com");
-dna.deleteForwarding("example.com");
-```
-
-<details>
-<summary>مثال على المخرجات</summary>
-
-```json
-{"result": "OK", "data": {"Enabled": true, "RedirectAddress": "https://www.example.org", "ForwardType": "Frame"}}
-```
-بدون إعادة توجيه (رسالة البوابة `Redirect information not found`):
-`{"result": "OK", "data": {"Enabled": false, "RedirectAddress": "", "ForwardType": ""}}`. أما أي
-خطأ آخر، مثل نطاق غير معروف، فيُعاد كخطأ.
-تُعيد `deleteForwarding` القيمة `{"result": "OK", "data": {"DomainName": "example.com", "Removed": true}}`،
-أو `"Removed": false` عندما لا يكون هناك أي إعادة توجيه مُعيَّنة.
-</details>
-
-### الحصول على تفاصيل الموزع والرصيد
-
-```java
-Map<String, Object> reseller = dna.getResellerDetails();
-Map<String, Object> usd = dna.getCurrentBalance();        // USD
-Map<String, Object> tl  = dna.getCurrentBalance("TRY");   // TRY، EUR، GBP
-```
-
-<details>
-<summary>مثال على المخرجات</summary>
-
-```json
-{
-    "result": "OK",
-    "id": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
-    "active": true,
-    "name": "example-reseller",
-    "balance": "601.64",
-    "currency": "USD",
-    "symbol": "$",
-    "balances": [
-        {"balance": "601.64", "currency": "USD", "symbol": "$"},
-        {"balance": "1250.50", "currency": "TL", "symbol": "TL"}
-    ]
-}
-```
-`getCurrentBalance`:
-```json
-{
-    "ErrorCode": 0,
-    "OperationMessage": "Command completed succesfully.",
-    "OperationResult": "SUCCESS",
-    "Balance": "601.64",
-    "CurrencyId": 2,
-    "CurrencyInfo": null,
-    "CurrencyName": "USD",
-    "CurrencySymbol": "$"
-}
-```
-لا يُبلغ الحساب إلا عن أرصدة USD وTRY. أما بالنسبة للعملات الأخرى (EUR، GBP، ...) فتكون النتيجة
-`{"ErrorCode": "BALANCE", "OperationResult": "FAILED", "OperationMessage": "No EUR balance is reported for this account. Available: USD, TRY.", "Balance": "0.00", ...}`.
-</details>
-
-### أدوات مساعدة (بدون اتصال بالشبكة)
-
-```java
-dna.isTrTLD("example.com.tr");   // true
-
-Map<String, Object> raw = new LinkedHashMap<>();
-raw.put("FirstName", " Jo ");
-raw.put("Phone", "+90 (532) 374 33 88");
-raw.put("Country", "Turkey");
-Map<String, Object> clean = dna.validateContact(raw);
-```
-
-تملأ `validateContact` الحقول الناقصة بقيم بديلة، وتزيل الأرقام والرموز من الأسماء،
-وتحوّل أسماء الدول إلى رموز ISO، وتقسم أرقام الهاتف إلى الرقم ورمز الدولة — وهي
-عملية التوحيد نفسها التي يطبّقها التسجيل.
-
-<details>
-<summary>مثال على المخرجات</summary>
-
-```json
-{
-    "FirstName": "Jo",
-    "Phone": "5323743388",
-    "Country": "TR",
-    "LastName": "Isimyok",
-    "AddressLine1": "Addres yok",
-    "City": "ISTANBUL",
-    "State": "ISTANBUL",
-    "ZipCode": "34000",
-    "PhoneCountryCode": "90",
-    "Fax": "",
-    "FaxCountryCode": ""
-}
-```
-</details>
-
-## معالجة الأخطاء
-
-لا ترمي الدوال الشبكية استثناءات أبدًا عند حدوث مشكلات في API أو الشبكة؛ بل تُعيد غلاف خطأ:
-
-```json
-{
-    "result": "ERROR",
-    "error": {
-        "Code": "API_404",
-        "Message": "The domain name you requested could not be found. Please check and try again.",
-        "Details": "The domain could not be found. Please check and try again."
-    }
-}
-```
-
-- قيمة `Code` هي `API_<HTTP status>` لأخطاء البوابة (`API_400`، `API_404`، `API_429`، `API_500`، ...).
-  عندما ترسل البوابة رمز خطأ خاصًا بها، يُحتفَظ به في `GatewayCode`
-  (مثل `"GatewayCode": "Dna.DomainService:Domain:10007"`)، وبذلك يمكن تمييز "النطاق غير موجود"
-  عن حالات 404 الأخرى. الإجابة بـ 301/302 تعني بيانات اعتماد خاطئة (`Invalid API credentials`).
-- عندما تسرد البوابة أخطاء تحقق خاصة بكل حقل، يذكر `Details` أسماء الحقول، مثل
-  `Contacts Phone - The field Phone must be a string with a maximum length of 16.`
-- يتحول جسم الخطأ الفارغ إلى رسالة مثل `HTTP 429 - Too Many Requests` وما شابهها.
-- تُعدّ مهلات الانتظار وإخفاقات DNS وTLS أخطاءً أيضًا، ولا تُعاد أبدًا كنجاح فارغ. رمزها هو
-  `CURL_<n>` بأرقام أخطاء curl، كما في php-dna: انتهاء المهلة هو `CURL_28` ورسالته
-  `Could not reach the DomainNameAPI service: the connection timed out. (...)`؛ أما إخفاقات النقل الأخرى
-  (`CURL_6` لـ DNS، و`CURL_7` لرفض الاتصال، و`CURL_35`/`CURL_60` لـ TLS، و`CURL_56` لإعادة تعيين الاتصال)
-  فتكون بالصيغة `Curl error during request: ...`.
-- يُعيد رفض البوابة (`"success": false`) الرمز `REGISTER_DOMAIN` أو `TRANSFER_DOMAIN` أو
-  `RENEW_DOMAIN` مع رسالة البوابة.
-- تستخدم عمليات التحقق داخل المكتبة رموزها الخاصة: `RESPONSE` (إجابة فارغة)، `DOMAIN_RENEW`، `BALANCE`،
-  `TRANSFER_NOT_AVAILABLE`، `ADD_ZONE` / `EDIT_ZONE` / `SET_ZONE` / `DELETE_ZONE`، `SET_FORWARD`، `AVAILABILITY`.
-
-البيانات التشخيصية لآخر استدعاء:
-
-```java
-dna.getRequestData();        // {url, method, payload}
-dna.getResponseData();       // الجسم بعد فك ترميزه، أو {raw_response: body}
-dna.getResponseHeaders();    // {url, http_code, content_type, total_time, headers}
-dna.getParsedResponseData(); // الجسم بعد فك ترميزه، أو {Code, Message, Details} الخاصة بالخطأ
-dna.getLastFunction();       // "request:GET domains/info"
-dna.getServiceUrl();
-```
-
-## وضع الاختبار
-
-مرّر `true` (أو `"true"`، `"1"`، `"on"`، `"yes"`) كمُعامِل ثالث للدالة الإنشائية لاستخدام
-بيئة الاختبار OTE ‏`https://ote.domainresellerapi.com/api/v1`. وتوجّه `setServiceUrl(url)`
-العميل إلى أي عنوان أساسي آخر.
-
-## تقارير الأخطاء (القياس عن بُعد)
-
-عندما يفشل استدعاء API، يمكن للمكتبة إرسال تقرير خطأ إلى نظام تتبع الأخطاء الخاص بـ DomainNameAPI
-‏(Sentry). كما يُرسَل جزء صغير عشوائي من الاستدعاءات الناجحة (4%، بالإضافة إلى كل استدعاء تتجاوز مدته ثانية واحدة)
-كسجل أداء. تُرسَل التقارير في الخلفية ولا تعيق استدعاءك أو تُفسده أبدًا. تقارير الأخطاء
-**مفعّلة افتراضيًا**؛ وتُوسَم الأحداث بالوسم `application=DomainNameAPI-Java`
-مع إصدار المكتبة.
-
-**ما يتم إرساله:**
-
-- رمز الخطأ ورسالته
-- مسار نقطة النهاية المستدعاة وطريقة HTTP
-- مدة الاستدعاء
-- إصدار المكتبة وإصدار Java
-- معرّف الموزع (Reseller ID) واسم النطاق
-- عنوان IP العام للخادم (يتم الحصول عليه عبر `api.ipify.org`)
-- اسم مستخدم نظام التشغيل
-- طلب API والاستجابة، بما في ذلك بيانات جهات اتصال النطاق؛ تُخفى بيانات الاعتماد فقط — إذ تُستبدل رموز EPP/التفويض ومفاتيح API وكلمات المرور والرموز المميزة (tokens) بـ `***`
-
-**ما لا يُرسَل أبدًا:** رموز EPP/التفويض ومفاتيح API وكلمات المرور والرموز المميزة (tokens) بصيغة مقروءة.
-
-**لماذا وإلى متى:** تُستخدم البيانات فقط لقياس الاستخدام والتشخيص المبكر للمشكلات، وتُحفَظ لمدة 30 يومًا على خادم Sentry الخاص بـ DomainNameAPI، ثم تُحذف تلقائيًا.
-
-**كيفية إيقافها:**
-
-```java
-DomainNameApi dna = new DomainNameApi(resellerId, apiKey);
-dna.setErrorReportingEnabled(false);   // عدم إرسال أي شيء
-dna.setTelemetryMinimal(true);         // أو: الرمز والرسالة ونقطة النهاية والتوقيت والإصدارات ومعرّف الموزع فقط
-```
-
-> 🔒 **الأمان:** التحقق من شهادة TLS مفعّل. على خادم يحتوي على مخزن شهادات CA قديم يمكن
-> إيقافه باستخدام `dna.setSslVerification(false);` — وهذا غير مستحسن؛ فتحديث
-> مخزن شهادات CA في Java هو الحل الأفضل.
-
-## خيارات متقدمة
-
-- **طبقة HTTP مخصصة:** تستبدل `dna.setTransport(HttpTransport)` طبقة النقل الافتراضية
-  المبنية على `java.net.http` (للوكلاء (proxies)، أو TLS مخصص، أو التسجيل، أو الاختبارات).
-- **مهلات الانتظار:** 30 ثانية لكل استدعاء، و10 ثوانٍ للاتصال.
-- **User-Agent:** يُرسِل كل طلب الترويسة `User-Agent: DomainNameAPI-Java/1.0.1`؛ إذ إن Cloudflare الموضوعة أمام
-  البوابة ترفض وكلاء المستخدم الافتراضيين للعملاء.
-
-## الاختبارات
+</div>
 
 ```bash
-mvn verify
-# or without a local JDK/Maven:
-docker run --rm -v "$PWD":/src -v dna-m2:/root/.m2 -w /src maven:3.9-eclipse-temurin-17 mvn -q verify
+docker run --rm -v "$PWD":/src -w /src maven:3.9-eclipse-temurin-17 mvn -B verify
 ```
 
-| الاختبار | الوصف |
-|------|-------------|
-| `ConformanceTest` | يشغّل جميع حالات المطابقة الـ 134 الخاصة بـ php-dna ‏(`src/test/resources/conformance/`): يجب أن تتطابق الطلبات المُرسَلة والقيم المُعادة مع php-dna |
-| `HttpLayerTest` | الترويسات، وسلاسل الاستعلام، وأجسام JSON، ووضع الاختبار، وتنظيم الإيقاع، وطبقة النقل الفعلية `java.net.http` |
-| `ErrorMappingTest` | ربط أخطاء البوابة، وإخفاقات النقل، وأخطاء التحقق |
-| `TelemetryTest` | إخفاء بيانات الاعتماد، والتصنيف، والوضع المختصر، وبنية الحدث |
-| `UtilitiesTest` | `isTrTLD`، `validateContact`، التنسيق المتوافق مع PHP، مُرمِّز JSON |
+<div dir="rtl">
 
-لا يتصل أي اختبار بالشبكة خارج الجهاز المحلي.
+لا تستدعي الاختبارات API الحقيقية أبدًا: فهي تستخدم `HttpClient` وهميًا، إضافةً إلى خادم HTTP محلي على 127.0.0.1
+لاختبار طبقة النقل. يشغّلها CI على Java 17 و21 و25.
 
-<hr style="border: 4px solid #000; border-style: dashed;">
+الملف `src/test/resources/openapi.json` هو وثيقة API التي تضمّنها أداة `dna` CLI. يتحقق `SpecCoverageTest` من أن لكل
+عملية فيه فئة طلب واحدة بالضبط بفئة الأمان نفسها في CLI، ومن أن كل طلب لا يرسل إلا معاملات استعلام وخصائص
+جسم تصفها الوثيقة. عندما تضيف API عملية جديدة، حدّث الوثيقة، وسيفشل الاختبار إلى أن يوجد الطلب.
 
-## رموز الإرجاع والأخطاء مع أوصافها
+<a id="upgrading-from-1x"></a>
 
-| الرمز | الوصف | التفاصيل |
-|------|------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| 1000 | تم تنفيذ الأمر بنجاح | العملية ناجحة. |
-| 1001 | تم تنفيذ الأمر بنجاح؛ الإجراء معلّق | العملية ناجحة. إلا أنها حاليًا في قائمة الانتظار لإتمامها. |
-| 2003 | مُعامِل مطلوب مفقود | خطأ في مُعامِل مفقود. على سبيل المثال، عدم إدخال رقم هاتف في معلومات الاتصال. |
-| 2105 | الكائن غير مؤهل للتجديد | حالة النطاق غير مناسبة للتجديد، فهو مقفل أمام عمليات التحديث. يجب ألا تكون الحالة "clientupdateprohibited". وقد يعود ذلك إلى حالات أخرى. |
-| 2200 | خطأ في المصادقة | خطأ في التفويض، رمز الأمان غير صحيح أو أن النطاق مسجّل لدى مسجِّل آخر. |
-| 2302 | الكائن موجود | اسم النطاق أو معلومات خادم الأسماء موجودة مسبقًا في قاعدة البيانات. لا يمكن التسجيل. |
-| 2303 | الكائن غير موجود | اسم النطاق أو معلومات خادم الأسماء غير موجودة في قاعدة البيانات. يلزم تسجيل جديد. |
-| 2304 | حالة الكائن تمنع العملية | حالة النطاق غير مناسبة للتحديث، فهو مقفل أمام عمليات التحديث. يجب ألا تكون الحالة "clientupdateprohibited". وقد يعود ذلك إلى حالات أخرى. |
+## الترقية من 1.x
 
-| الرمز | التفاصيل |
-|------|--------------------------------------------------------------------------------------------------------------------------------------|
-| 101  | خطأ في النظام، التفاصيل لـ ({0})! |
-| 102  | أخطاء متعددة، التفاصيل لـ ({0})! |
-| 103  | أخطاء غير معروفة، التفاصيل لـ ({0})! |
-| 200  | أمر API غير موجود ({0})! |
-| 210  | خدمة API غير موجودة ({0})! |
-| 211  | لم يُحدَّد مزوّد خدمة API! |
-| 300  | الموزع غير موجود! |
-| 301  | عنوان IP الحالي الخاص بك غير مصرّح له بالوصول. يُرجى التأكد من أنك تتصل من عنوان IP مصرّح به ثم المحاولة مرة أخرى |
-| 310  | امتداد النطاق (TLD) غير مدعوم! |
-| 320  | API غير موجود! |
-| 321  | العملة غير مدعومة! |
-| 330  | لم تُحدَّد المُعاملات المطلوبة ({0}). |
-| –    | تأكد من إرسال جميع كائنات جهات الاتصال كاملة |
-| 340  | لم يُعثر على تعريف السعر ({0}[{1}]-{2}{3}). |
-| 350  | رصيد الموزع غير كافٍ. (معرّف الموزع : {0} - الرصيد الحالي : {1} {2}). |
-| 350  | عملة المحاسبة غير مطابقة أو أن الرصيد غير كافٍ. |
-| 360  | طلب API غير صالح للحقل ({0}). |
-| 360  | تم تجاوز حصة API! |
-| 361  | خطأ تقييد المعدّل (Throttling)! |
-| 362  | النطاق المميز (Premium) غير متاح للتسجيل حاليًا. |
-| 363  | أُلغيت العملية لأن النطاق في فترة التجديد التلقائي |
-| 364  | هذا النطاق غير متاح حاليًا لإجراء المعاملات بسبب مشكلة لدى السجل (Registry) |
+الإصدار 2.0 حزمة SDK جديدة. كان الإصدار 1.x نسخة منقولة من مكتبة PHP ويُعيد أغلفة `Map` غير مكتوبة بأنواع؛ أما 2.0 فيعتمد
+طلبات ونماذج مكتوبة بأنواع صريحة، واستثناءات، وبانيًا (builder).
 
-| الرمز | التفاصيل |
-|------|---------------------------------------------------------------------------------------------|
-| 400  | جهة اتصال غير صالحة ({0}). |
-| 401  | لا يمكن مزامنة معلومات جهة الاتصال. |
-| 402  | لا يوجد وصول إلى معلومات جهة الاتصال من السجل. |
-| 403  | توجد معلومات ناقصة في النظام. أدخل معلوماتك الافتراضية أو تواصل مع فريق الدعم. |
-| 404  | لا يمكن تحديث جهة اتصال النطاق. يلزم إذن من السجل. |
-| 410  | جهة الاتصال غير موجودة. |
-| 410  | جهة الاتصال غير موجودة ({0}). |
-| 420  | أمر API غير صالح لجهة الاتصال {0}. |
-| 430  | API جهة الاتصال غير موجود. |
-| 440  | جهة الاتصال غير مُزامَنة. |
-| 450  | عدد كبير جدًا من جهات اتصال النطاق! |
-| 451  | تعذّر متابعة تحديث جهة الاتصال. |
+| 1.x | 2.0 |
+|---|---|
+| `new DomainNameApi(id, key, true)` | `DomainNameApiClient.create(id, key, ApiEnvironment.OTE)` |
+| `dna.getResellerDetails()`, `dna.getCurrentBalance()` | `client.account().get()` / `getProfile()` |
+| `dna.checkAvailability(...)` | `client.domains().search(...)` / `bulkSearch(...)` |
+| `dna.getList()` | `client.domains().list()` / `listAll()` |
+| `dna.getDetails(domain)` | `client.domains().get(domain)` |
+| `dna.registerWithContactInfo(...)` | `client.domains().register(...)` |
+| `dna.renew(domain, period)` | `client.domains().renew(domain, years)` |
+| `dna.transfer(domain, eppCode, period)` | `client.domains().transfer(domain, authCode, years)` |
+| `dna.modifyNameServer(...)` | `client.domains().setNameServers(...)` |
+| `dna.enableTheftProtectionLock(domain)` | `client.domains().lock(domain)` |
+| `dna.modifyPrivacyProtectionStatus(...)` | `client.domains().setPrivacyProtection(...)` |
+| `dna.saveContacts(...)` | `client.domains().updateContacts(...)` |
+| `dna.addChildNameServer(...)` | `client.domains().childNameServers().add(...)` |
+| `dna.getResourceRecords(domain)` | `client.dns().list(domain)` |
+| `dna.addResourceRecord(...)` | `client.dns().add(...)` |
+| `dna.setResourceRecordSet(...)` | `client.dns().replace(...)` |
+| `dna.applyResourceRecords(domain)` | `client.dns().apply(domain)` |
+| `dna.setForwarding(...)` | `client.domains().forwarding().set(...)` |
+| `dna.getTldList()` | `client.products().listAllTlds()` |
+| `result.get("result").equals("ERROR")` | `catch (DomainNameApiException e)` |
 
-| الرمز | التفاصيل |
-|------|--------------------------------------------------------------------------------------------------------------------------------------|
-| 500  | معرّف نطاق غير صالح. |
-| 500  | معرّف نطاق غير صالح ({0}). |
-| 501  | تعذّرت مزامنة النطاق ({0}) |
-| 502  | فشل النقل الداخلي |
-| 503  | تسجيل النطاق غير متاح. |
-| 504  | معلومات النطاق غير متطابقة. السابق: {0} |
-| 505  | أدخل عنوان IP. |
-| 506  | بدأ نقل النطاق ولكن لم تُقرأ معلومات جهات الاتصال. |
-| 507  | خطأ في التفويض. |
-| 510  | النطاق غير موجود. |
-| 511  | لا يمكن العثور على النطاقات منتهية الصلاحية. |
-| 512  | النطاق غير قابل للتجديد. |
-| 513  | النطاق ليس في حالة قابلة للتحديث. يجب أن يكون نشطًا ليتم تحديثه |
-| 514  | يُتوقَّع أن يكون النطاق في فترة الاسترداد (Redemption). |
-| 520  | أمر API غير صالح للنطاق "{0}". |
-| 530  | مدة النطاق غير صالحة. يجب أن تكون المدة من {0} إلى {1} سنة. المدة المطلوبة {2} سنة. |
-| 540  | لا يمكن تمديد النطاق لأكثر من {0} سنة من التاريخ الحالي. |
-| 550  | اسم النطاق غير صالح. يجب أن يتراوح طول النطاق بين {0} و{1} حرفًا. طول اسم النطاق المطلوب {2} حرفًا. |
-| 560  | عدد خوادم الأسماء غير صالح. يجب أن يحتوي النطاق على {0} إلى {1} من خوادم الأسماء. عدد خوادم الأسماء المطلوب {2}. |
-| 561  | لم يُعثر على معلومات خادم الأسماء في الطلب الوارد |
-| 570  | IDN غير مدعوم للامتداد "{0}". |
-| 571  | المدة غير صالحة. |
-| 572  | الأمر غير صالح. |
-| 573  | لم يُعثر على أسماء النطاقات. |
-| 574  | لم يُعثر على أسماء الامتدادات (TLD). |
-| 575  | النطاق ليس في حالة قابلة للتحديث. يجب أن يكون نشطًا لكي يتم تحديث خوادم الأسماء |
-| 576  | يمكن تجديد النطاق خلال الشهر الأخير قبل تاريخ انتهاء الصلاحية |
-| 580  | النقل غير مدعوم للامتداد "{0}". |
-| 581  | خادم الأسماء الفرعي غير موجود |
-| 582  | بدأ موزع آخر عملية النقل. |
-| 583  | لم تبدأ عملية النقل. يُرجى التواصل مع فريق الدعم. |
-| 584  | حالة الكائن تمنع العملية |
-| 590  | رمز التفويض مطلوب لعملية النقل هذه. |
-| 591  | رمز التفويض غير صالح. |
-| 592  | يوجد قفل نقل على النطاق. |
-| 593  | لا يمكن نقل النطاق، إذ يجب أن تستوفي معلومات الحالة وقفل النقل المعايير المطلوبة. (معلومات الحالة: #ok) |
-| 594  | تعذّر حل عنوان خادم أسماء النطاق ({0}) |
-| 595  | لا يمكن قراءة معلومات جهة الاتصال (whois.registrar.tld)، يُرجى التأكد من أن حالة حماية الخصوصية مفتوحة |
-| 596  | تعذّر التحقق من معلومات جهة الاتصال |
-| 597  | امتداد النطاق (TLD) غير موجود |
-| 598  | حدث خطأ غير معروف |
-| 599  | إعادة توجيه النطاق غير موجودة |
+ينتقل الحد الأدنى لإصدار Java من 11 إلى 17، وأصبحت Jackson تبعيةً. كان الإصدار 1.x يرسل تقارير الأخطاء إلى Sentry؛ أما 2.0
+فلا يرسل شيئًا إلى أي جهة سوى API.
+
+## الروابط
+
+- [`dna` CLI وخادم MCP](https://github.com/domainreseller/cli): API نفسها من الطرفية ومن وكلاء الذكاء الاصطناعي.
+- [توثيق API](https://www.domainnameapi.com/docs/)
+- [سجل التغييرات](CHANGELOG.md)
 
 ## الترخيص
 
-Apache License 2.0 — راجع [LICENSE](LICENSE).
+Apache License 2.0. راجع [LICENSE](LICENSE).
+
+</div>

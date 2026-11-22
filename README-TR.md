@@ -10,938 +10,753 @@
   <a href="README-IT.md"> | IT <img style="padding-top: 8px" src="https://raw.githubusercontent.com/yammadev/flag-icons/master/png/IT.png" alt="IT" height="20" /></a>
 </div>
 
-# java-dna — DomainNameAPI Java Kütüphanesi
+# DomainNameAPI Java SDK (java-dna)
 
-DomainNameAPI alan adı bayilik (reseller) REST API'si için Java istemcisi.
-[php-dna](https://github.com/domainreseller/php-dna) kütüphanesinin birebir uyarlamasıdır: aynı metotlar, ağa giden
-aynı istekler ve aynı dönüş değerleri. Kotlin ve diğer JVM dilleri tarafından doğrudan kullanılabilir.
+<p>
+  <a href="https://github.com/domainreseller/java-dna/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/domainreseller/java-dna/ci.yml?branch=main&label=CI&style=flat-square" alt="CI"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-0B8DB5?style=flat-square" alt="Apache-2.0"></a>
+  <img src="https://img.shields.io/badge/Java-17%2B-0B8DB5?style=flat-square" alt="Java 17+">
+</p>
 
-## 📦 İndirme — her zaman Releases kullanın!
+[Domain Name API](https://www.domainnameapi.com) bayi platformunun resmi Java SDK'sı. REST API'nin 67 işleminin
+tamamını tipli istemciler ve modellerle kapsar: alan adları, iletişim bilgileri, DNS, DNSSEC, SSL sertifikaları,
+hosting, siparişler, ürünler ve hesabınız.
 
-⬇️ **Test edilmiş en güncel sürümü buradan edinin: https://github.com/domainreseller/java-dna/releases/latest**
+```java
+DomainNameApiClient client = DomainNameApiClient.create(resellerId, apiKey, ApiEnvironment.OTE);
 
-> ⚠️ Yeşil **Code → Download ZIP** düğmesini **kullanmayın** — bu düğme ham geliştirme dalını indirir. Release paketleri sürümlenmiş, test edilmiş ve canlı ortama hazırdır.
-
-## Kurulum ve Entegrasyon Rehberi
-
-### Minimum Gereksinimler
-
-- Java 11 veya üzeri (17 veya 21 önerilir)
-- Çalışma zamanı bağımlılığı yoktur: kütüphane `java.net.http.HttpClient` ve küçük, yerleşik bir JSON kodlayıcı/çözücü kullanır.
-
-### A) Release jar dosyası
-
-[Releases](https://github.com/domainreseller/java-dna/releases/latest) sayfasından `domainnameapi-1.0.1.jar` dosyasını indirin ve classpath'inize ekleyin.
-
-```bash
-javac -cp domainnameapi-1.0.1.jar MyApp.java
-java  -cp domainnameapi-1.0.1.jar:. MyApp
+DomainSearchResult search = client.domains().search("example.com");
+if (search.info() != null && search.info().isAvailable()) {
+    client.domains().register("example.com", contact, List.of("tr.apiname.com", "eu.apiname.com"));
+}
 ```
 
-### B) Maven / Gradle
+- **Her şey tipli.** Her işlem bir istek sınıfı, her yanıt Javadoc'lu bir record'dur. Map yok, JSON ayrıştırma yok.
+- **Kendi istekleriniz.** Her istek `BaseRequest`'ten türer. SDK'nın henüz kapsamadığı bir uç nokta için ondan kendi sınıfınızı türetin.
+- **Para harcayan işlemlerde güvenli.** Her istek, okuma mı yaptığını, yazma mı yaptığını, bakiyenizden ücret mi aldığını yoksa bir şey mi sildiğini bildirir. Ücretli istekler asla yeniden denenmez, salt-okunur mod ise her değişikliği engeller.
+- **Yerleşik dayanıklılık.** Hız sınırlarına otomatik uyulur, 429 yanıtları yeniden denenir, okumalarda ağ hataları yeniden denenir.
+- **Net hatalar.** Sabit bir türü, API'nin hata kodunu, alan düzeyinde doğrulama hatalarını, correlation ID'yi ve bir ipucunu taşıyan tek bir unchecked istisna.
+- **Modern Java.** Java 17+, record'lar, tembel (lazy) `Stream` sayfalama, `CompletableFuture` varyantları, `java.net.http` üzerinde thread-safe bir istemci.
+- **Gizlilik.** Telemetri yok. API'ye gönderdiğiniz istekler dışında sürecinizden hiçbir şey dışarı çıkmaz.
 
-Koordinatlar: `io.github.domainreseller:domainnameapi:1.0.1`. Artifact herkese açık bir depoda yayınlanana
-kadar, release kaynak kodundan yerel deponuza kurun:
+[Domain Name API CLI'si `dna`](https://github.com/domainreseller/cli)'nın Java karşılığıdır: aynı API
+dokümanı, aynı güvenlik sınıfları, yeniden deneme kuralları ve hata kodları.
 
-```bash
-mvn -DskipTests install
-```
+## İçindekiler
+
+- [Kurulum](#install)
+- [Kimlik bilgileri](#credentials)
+- [Hızlı başlangıç](#quick-start)
+- [Yapılandırma](#configuration)
+- [Kullanım](#usage): [hesap](#account) · [alan adları](#domains) · [iletişim bilgileri](#contacts) · [DNS](#dns) · [DNSSEC](#dnssec) · [SSL](#ssl) · [hosting](#hosting) · [siparişler ve ürünler](#orders-and-products)
+- [İstekler ve `BaseRequest`](#requests-and-baserequest)
+- [Hatalar](#errors)
+- [Güvenlik, yeniden denemeler ve hız sınırları](#safety-retries-and-rate-limits)
+- [Asenkron çağrılar](#asynchronous-calls)
+- [Kodunuzu test etme](#testing-your-code)
+- [Proje yapısı](#project-layout)
+- [Geliştirme](#development)
+- [1.x'ten yükseltme](#upgrading-from-1x)
+
+<a id="install"></a>
+
+## Kurulum
+
+> [!IMPORTANT]
+> **Her zaman [en son sürümü](https://github.com/domainreseller/java-dna/releases/latest) kullanın.** Yayınlanan paketler sürüm numaralıdır ve test edilmiştir.
+> Yeşil **Code → Download ZIP** düğmesi ise geliştirme dalını indirir.
+
+Koordinatlar: `io.github.domainreseller:domainnameapi:2.0.0`.
 
 ```xml
 <dependency>
     <groupId>io.github.domainreseller</groupId>
     <artifactId>domainnameapi</artifactId>
-    <version>1.0.1</version>
+    <version>2.0.0</version>
 </dependency>
 ```
 
 ```kotlin
 // build.gradle.kts
-repositories { mavenLocal(); mavenCentral() }
-dependencies { implementation("io.github.domainreseller:domainnameapi:1.0.1") }
+dependencies {
+    implementation("io.github.domainreseller:domainnameapi:2.0.0")
+}
 ```
 
-## 🔑 API Bilgileri — Reseller ID ve API Key
+Artifact herkese açık bir depodan edinilebilir olana kadar, onu sürüm kaynağından yerel Maven deponuza kurun
+(`mvn -DskipTests install`) ve Gradle depolarınıza `mavenLocal()` ekleyin.
 
-Kütüphane DomainNameAPI REST API'si ile haberleşir ve yapıcı metoda (constructor) verilen tam olarak iki kimlik bilgisine ihtiyaç duyar:
+**Gereksinimler:** Java 17 veya üstü. Tek bağımlılık JSON için [Jackson](https://github.com/FasterXML/jackson-databind)'dır
+(`jackson-databind`); HTTP, JDK'nın `java.net.http.HttpClient` sınıfı üzerinden yapılır.
 
-| Parametre | Değer |
-|---|---|
-| Birinci | Reseller ID — `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx` biçiminde bir UUID |
-| İkinci | API Key |
+<a id="credentials"></a>
 
-> 💡 **Reseller ID** ve **API Key** bilgilerinizi DomainNameAPI panelinizde **API Ayarları** bölümünde bulabilirsiniz.
-> ⚠️ Bunlar **API kimlik bilgileridir** — panel giriş bilgileriniz burada **çalışmaz**.
+## Kimlik bilgileri
 
-```java
-import io.github.domainreseller.dna.DomainNameApi;
-import io.github.domainreseller.dna.Json;
+API her isteği iki değerle doğrular; SDK bunları sizin yerinize gönderir:
 
-String resellerId = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx";
-String apiKey     = "your-api-key";
+| Değer | Başlık | Nerede bulunur |
+|---|---|---|
+| Reseller ID (bir UUID) | `__reseller` | Bayi paneli → **API ayarları** |
+| API anahtarı | `X-API-KEY` | Bayi paneli → **API ayarları** |
 
-// Canlı ortam
-DomainNameApi dna = new DomainNameApi(resellerId, apiKey);
+> [!NOTE]
+> Bunlar **API kimlik bilgileridir**: panel girişiniz burada çalışmaz. **Canlı ortam ve OTE (test ortamı) farklı
+> API anahtarları kullanır.** Birini diğerinde kullanmak `INVALID_API_KEY` veya `INVALID_RESELLER` hatasıyla sonuçlanır.
 
-// Test (OTE) ortamı
-DomainNameApi ote = new DomainNameApi(resellerId, apiKey, true);
-```
-
-Her iki kimlik bilgisinin de baştaki ve sondaki boşlukları temizlenir. Paneller onay kutusu ayarlarını metin olarak sakladığından,
-test modu bayrağı string de olabilir: `"1"`, `"true"`, `"on"` ve `"yes"` test ortamını, diğer tüm değerler canlı ortamı seçer.
+<a id="quick-start"></a>
 
 ## Hızlı başlangıç
 
 ```java
-DomainNameApi dna = new DomainNameApi(resellerId, apiKey);
+import io.github.domainreseller.dna.ApiEnvironment;
+import io.github.domainreseller.dna.DomainNameApiClient;
+import io.github.domainreseller.dna.accounts.ResellerAccount;
+import io.github.domainreseller.dna.contacts.ContactInfo;
+import io.github.domainreseller.dna.domains.DomainOperationResult;
+import io.github.domainreseller.dna.domains.DomainSearchResult;
+import java.util.List;
 
-Map<String, Object> details = dna.getDetails("example.com");
-if ("OK".equals(details.get("result"))) {
-    Map<?, ?> data = (Map<?, ?>) details.get("data");
-    System.out.println(data.get("Status") + " until " + ((Map<?, ?>) data.get("Dates")).get("Expiration"));
-} else {
-    Map<?, ?> error = (Map<?, ?>) details.get("error");
-    System.out.println(error.get("Code") + ": " + error.get("Message"));
-}
+// OTE is the test environment: real API, its own data, no real money.
+DomainNameApiClient client = DomainNameApiClient.create(resellerId, apiKey, ApiEnvironment.OTE);
 
-// Herhangi bir sonucu JSON olarak yazdır
-System.out.println(Json.encodePretty(details));
+// 1. Check the credentials and the balance.
+ResellerAccount account = client.account().get();
+System.out.println(account.resellerName() + ": " + account.usdBalance() + " USD");
+
+// 2. Is the domain available, and at what price?
+DomainSearchResult search = client.domains().search("my-new-domain.com");
+System.out.println(search.info().status() + " " + search.info().price() + " " + search.info().currency());
+
+// 3. Register it with one contact for all four roles. This charges the balance.
+ContactInfo contact = new ContactInfo()
+        .firstName("Ada").lastName("Lovelace").email("ada@example.com")
+        .address("1 Example Street").city("Istanbul").state("Istanbul").postalCode("34000")
+        .country("TR").phoneCountryCode("90").phone("5551234567");
+DomainOperationResult result = client.domains().register("my-new-domain.com", contact,
+        List.of("tr.apiname.com", "eu.apiname.com"));
+System.out.println(result.success() + " " + result.status() + ", expires " + result.expirationDate());
+
+// 4. List every domain; pages are fetched as the stream is consumed.
+client.domains().listAll().forEach(domain ->
+        System.out.println(domain.domainName() + " expires in " + domain.remainingDays() + " days"));
 ```
 
-Kotlin:
+[examples](examples) klasöründe bu senaryolar için çalıştırılabilir programlar vardır. `DNA_*` ortam değişkenlerini
+okurlar; bu yüzden onları OTE'ye yönlendirin:
 
-```kotlin
-val dna = DomainNameApi(resellerId, apiKey)
-val details = dna.getDetails("example.com")
-if (details["result"] == "OK") {
-    val data = details["data"] as Map<*, *>
-    println(data["Status"])
-}
+```bash
+export DNA_RESELLER_ID=... DNA_API_KEY=... DNA_ENV=ote
 ```
 
-### Dönüş değerleri
+<a id="configuration"></a>
 
-Metotlar, php-dna'nın döndürdüğü dinamik yapının aynısını `LinkedHashMap` ve `ArrayList` ile
-oluşturarak döndürür:
+## Yapılandırma
 
-- Anahtar adları php-dna ile birebir aynıdır (`Status`, `LockStatus`, `NameServers`, ...).
-- `LockStatus` gibi bayraklar `"true"` / `"false"` **string** değerleridir.
-- Fiyatlar ve bakiyeler **biçimlendirilmiş string** değerlerdir (`"11.9900"`, `"601.64"`).
-- Sayılar `Integer`, `Long` veya `Double`; JSON nesneleri `Map<String, Object>`, diziler ise `List<Object>` olarak gelir.
-- Çoğu metot `{"result": "OK", "data": {...}}` veya `{"result": "ERROR", "error": {...}}` döndürür.
-  İstisnalar: `getCurrentBalance` bir `OperationResult` zarfı kullanır, `checkAvailability` ise başarılı
-  olduğunda yalın bir `List` döndürür.
+Bir istemci oluşturmanın dört yolu vardır:
 
-Hatalar istisna (exception) olarak fırlatılmaz, dönüş değeri olarak verilir. Bir istemci örneği her çağrıya ait tanılama
-bilgilerini tuttuğu için her iş parçacığında (thread) ayrı bir örnek kullanın.
+```java
+// Credentials and environment
+DomainNameApiClient client = DomainNameApiClient.create(resellerId, apiKey, ApiEnvironment.PRODUCTION);
+
+// All settings
+DomainNameApiClient client = DomainNameApiClient.builder()
+        .credentials(resellerId, apiKey)
+        .environment(ApiEnvironment.OTE)
+        .timeout(Duration.ofSeconds(30))
+        .readOnly(true)
+        .build();
+
+// The same environment variables the dna CLI reads
+DomainNameApiClient client = DomainNameApiClient.fromEnvironment();
+
+// The environment variables, plus your own settings
+DomainNameApiClient client = DomainNameApiClient.Builder.fromEnvironment()
+        .httpClient(myHttpClient)        // for example with a proxy
+        .build();
+```
+
+| Builder metodu | Varsayılan | Anlamı |
+|---|---|---|
+| `credentials(resellerId, apiKey)` | (zorunlu) | Kimlik bilgileri. |
+| `environment(...)` | `PRODUCTION` | `PRODUCTION` (`https://api.domainresellerapi.com`) veya `OTE` (`https://ote.domainresellerapi.com`). |
+| `baseUri(...)` | yok | Ortamın adresini geçersiz kılar, örneğin bir proxy için. |
+| `timeout(...)` | 60 sn | Tek bir denemenin zaman sınırı. |
+| `maxRetries(...)` | 2 | Başarısız bir isteğin kaç kez tekrarlanacağı ([yeniden denemeler](#safety-retries-and-rate-limits) bölümüne bakın). 0, yeniden denemeyi kapatır. |
+| `maxRetryDelay(...)` | 30 sn | Bir yeniden denemeden önceki en uzun bekleme. |
+| `paceRequests(...)` | `true` | İstekleri, geçidin hız sınırlarının altında kalacak şekilde aralıklar. |
+| `readOnly(...)` | `false` | Okuma olmayan her isteği, gönderilmeden önce engeller. |
+| `userAgent(...)` | `DomainNameAPI-Java/<version>` | `User-Agent` başlığı. |
+| `httpClient(...)` | SDK'nın kendi istemcisi | Kendi `java.net.http.HttpClient` nesneniz (proxy, TLS, executor). |
+| `executor(...)` | paylaşılan bir daemon havuzu | `sendAsync` metotlarının çalıştığı yer. |
+
+`fromEnvironment()` şunları okur:
+
+| Değişken | Anlamı |
+|---|---|
+| `DNA_RESELLER_ID`, `DNA_API_KEY` | Kimlik bilgileri. |
+| `DNA_ENV` | `production` veya `ote` (ayrıca `prod`, `live`, `test`, `sandbox`). |
+| `DNA_TEST_MODE` | `true`, `1`, `on` veya `yes` OTE'yi seçer. `DNA_ENV` ayarlı değilse kullanılır. |
+| `DNA_BASE_URL` | İsteğe bağlı temel adres geçersiz kılma. |
+| `DNA_READ_ONLY` | `true`, salt-okunur modu açar. |
+
+İstemci thread-safe'tir. Her kimlik bilgisi kümesi için bir tane oluşturun ve uygulamanın ömrü boyunca yeniden kullanın.
+
+<a id="usage"></a>
 
 ## Kullanım
 
-Aşağıdaki tüm örnekler [examples](examples) klasöründe çalıştırılabilir sınıflar olarak da mevcuttur:
+API'nin her alanının kendi istemcisi vardır. Metotlar basit argümanlar alır; daha fazla seçenek için her metodun istek
+nesnesini alan bir aşırı yüklemesi (veya kardeş metodu) da vardır. Bakiyenizden ücret alan metotlar bunu Javadoc'larında belirtir.
+
+<a id="account"></a>
+
+### Hesap
+
+```java
+ResellerAccount account = client.account().get();          // resellerId, resellerName, tryBalance, usdBalance
+ResellerProfile profile = client.account().getProfile();   // name, companyName, accountCurrency, status, ...
+
+// This month's charges, across all pages
+ListTransactionsRequest request = new ListTransactionsRequest()
+        .chargeType(ChargeType.SUBTRACT)
+        .startDate(OffsetDateTime.parse("2026-11-01T00:00:00Z"))
+        .transactionTypes(TransactionType.REGISTER, TransactionType.RENEW);
+client.account().listAllTransactions(request).forEach(t ->
+        System.out.println(t.creationTime() + " " + t.type() + " " + t.amount() + " " + t.amountCurrency()));
+```
+
+<a id="domains"></a>
+
+### Alan adları
+
+**Arama**
+
+```java
+DomainSearchResult one = client.domains().search("example.com", "USD");
+boolean available = one.info() != null && one.info().isAvailable();
+
+BulkSearchResult many = client.domains().bulkSearch(List.of("example.com", "example.net", "example.com.tr"));
+for (DomainAvailability domain : many.available()) {
+    System.out.println(domain.domainName() + ": " + domain.price() + " " + domain.currency());
+}
+```
+
+**Listeleme ve ayrıntılar**
+
+```java
+Page<Domain> page = client.domains().list(new ListDomainsRequest().maxResultCount(50).statuses(DomainStatus.ACTIVE));
+
+client.domains().listAll(new ListDomainsRequest().domainName("example"))
+        .forEach(d -> System.out.println(d.domainName() + " " + d.status() + " " + d.expirationDate()));
+
+DomainDetails details = client.domains().get("example.com");
+System.out.println(details.authCode());
+details.contact(ContactType.REGISTRANT).ifPresent(c -> System.out.println(c.email()));
+```
+
+**Kayıt, yenileme, transfer, geri yükleme** (bunlar bakiyenizden ücret alır)
+
+```java
+// One contact for all four roles, two years
+client.domains().register("example.com", contact, List.of("tr.apiname.com", "eu.apiname.com"), 2);
+
+// Full control: different contacts per role, registry attributes, trustee service
+client.domains().register(new RegisterDomainRequest("example.com.tr")
+        .period(1)
+        .nameServers("tr.apiname.com", "eu.apiname.com")
+        .contacts(DomainContact.forAllRoles(contact))
+        .tldAttributes(Map.of("<key>", "<value>")));   // the keys: client.products().getTld("com.tr").get().attributes()
+
+// With existing contact handles
+client.domains().registerWithHandle("example.com", "DNA-12345", List.of("tr.apiname.com", "eu.apiname.com"), 1);
+
+RenewalCheck renewal = client.domains().checkRenewal("example.com");   // free
+if (renewal.isRenewable()) {
+    client.domains().renew("example.com", 1);
+}
+
+TransferCheck check = client.domains().checkTransfer("example.com", "EPP-CODE");   // free
+if (check.isTransferable()) {
+    client.domains().transfer("example.com", "EPP-CODE");
+}
+
+client.domains().restore("example.com");
+```
+
+İstekler gönderilmeden önce denetlenir. Dört iletişim rolünün tamamını içermeyen bir kayıt, e-posta adresi olmayan bir
+iletişim kişisi veya 0 yıllık bir süre `IllegalArgumentException` fırlatır ve API'ye hiçbir şey ulaşmaz.
+
+> [!NOTE]
+> API, bir kayıt, yenileme veya transfer isteğini HTTP 200 ve `"success": false` ile yanıtlayabilir (örneğin kayıt
+> kuruluşu alan adını reddettiğinde). SDK bu yanıtı olduğu gibi döndürür: `DomainOperationResult.success()` ve
+> `message()` değerlerini kontrol edin.
+
+**Ayarlar**
+
+```java
+client.domains().lock("example.com");
+client.domains().unlock("example.com");
+client.domains().setPrivacyProtection("example.com", true);
+client.domains().setNameServers("example.com", List.of("ns1.example.net", "ns2.example.net"));
+client.domains().setNameServers("example.com", List.of("ns1.example.net"), DnssecMode.DISABLE_DNSSEC);  // a signed domain
+DomainAuthCode authCode = client.domains().updateAuthCode("example.com");
+
+client.domains().updateContacts("example.com", DomainContact.forAllRoles(contact));
+client.domains().setContactHandles("example.com", List.of(new ContactHandle(ContactType.TECH, "DNA-12345")));
+```
+
+**URL yönlendirme, child nameserver'lar ve belgeler**
+
+```java
+client.domains().forwarding().set("example.com", "https://www.example.net", ForwardType.STANDARD);
+DomainForwarding forwarding = client.domains().forwarding().get("example.com");
+client.domains().forwarding().delete("example.com");
+
+// The IP version of each address is detected
+client.domains().childNameServers().add("example.com", "ns1.example.com", "192.0.2.10", "2001:db8::10");
+client.domains().childNameServers().update("example.com", "ns1.example.com", List.of("192.0.2.20"));
+client.domains().childNameServers().delete("example.com", "ns1.example.com");
+
+// Registry documents (mostly .tr)
+client.domains().documents().upload("example.com.tr",
+        List.of(DocumentUpload.fromFile(DocumentType.IDENTITY_CARD, Path.of("id.pdf"))));
+client.domains().documents().listAll("example.com.tr")
+        .forEach(document -> System.out.println(document.name() + ": " + document.status()));
+```
+
+<a id="contacts"></a>
+
+### İletişim bilgileri
+
+İletişim kişisi tanımlayıcıları (handle), yeniden kullanılabilir iletişim kayıtlarıdır. Bir kez oluşturun, birçok alan adında kullanın.
+
+```java
+CreateContactResult created = client.contacts().create(contact);
+String handle = created.handle();                                  // for example DNA-12345
+
+ContactDetails details = client.contacts().get(handle);            // the contact and its verification state
+HandleUpdateResult result = client.contacts().update(handle, contact);
+System.out.println(result.stats().successCount() + " of " + result.stats().totalDomainCount() + " domains updated");
+
+List<ContactVerification> verifications = client.contacts().getVerification(handle);
+client.contacts().resendVerification(handle);
+```
+
+<a id="dns"></a>
+
+### DNS
+
+Platformun nameserver'larındaki alan adlarının bölge (zone) kayıtları. Alan adı bu nameserver'ları kullanmaya başlayınca
+kayıtlar herkese açık olarak çözümlenir; bunu `apply` sağlar.
+
+```java
+for (DnsRecordSet set : client.dns().list("example.com")) {
+    System.out.println(set.name() + " " + set.type() + " " + set.ttl() + " " + set.values());
+}
+
+client.dns().add("example.com", "www", RecordType.A, "192.0.2.10");
+client.dns().add("example.com", "@", RecordType.of("txt"), "v=spf1 include:_spf.example.net ~all");   // "txt" becomes TXT
+client.dns().add("example.com", "@", RecordType.MX, List.of("10 mx1.example.net", "20 mx2.example.net"), 3600);
+client.dns().replace("example.com", "www", RecordType.A, List.of("192.0.2.20"), 300);
+client.dns().delete("example.com", "www", RecordType.A, "192.0.2.20");
+
+ZoneApplyResult applied = client.dns().apply("example.com");
+```
+
+SDK, API'nin reddedeceği durumları önceden denetler: apex'te CNAME, üç parçası eksik bir CAA değeri, 1–86400 dışında
+bir TTL. Bölge çağrıları, geçidin sınırı olan 1 saniye arayla yapılır.
+
+<a id="dnssec"></a>
+
+### DNSSEC
+
+```java
+DnssecInfo info = client.dnssec().get("example.com");   // status, dsRecords, allowedAlgorithms, ...
+
+DsRecordData record = DsRecordData.parse("12345 13 2 49FD46E6C4B45C55D4AC69CBD3CD34AC1AFE51DE");
+client.dnssec().add("example.com", record);
+client.dnssec().remove("example.com", record);
+client.dnssec().disable("example.com");                 // removes every DS record
+```
+
+<a id="ssl"></a>
+
+### SSL
+
+Bir alan adının birden fazla sertifikası olabilir; bu nedenle mevcut bir sertifika alan adıyla değil,
+**sertifika kimliği** (bir `UUID`) ile belirtilir. `purchase` ve `renew` bu kimliği döndürür: saklayın. `list`,
+elinizdeki sertifikaların kimliklerini bulur.
+
+```java
+// 1. Buy (charges the balance). Product codes come from client.products().listSslProducts().
+List<String> approvers = client.ssl().getApproverEmails("example.com", "PKG-CODE");   // before the purchase
+SslOperationResult order = client.ssl().purchase("example.com", "PKG-CODE");
+UUID certificateId = order.certificateId();             // store it: every later call takes it
+
+// 2. A CSR and private key, if you do not have one
+GeneratedCsr csr = client.ssl().generateCsr(new GenerateCsrRequest("example.com")
+        .country("TR").state("Istanbul").locality("Istanbul").organization("Example Ltd").organizationUnit("IT"));
+
+// 3. Configure within 15 days: CSR, validation method and contact
+client.ssl().configure(new ConfigureCertificateRequest(certificateId, csr.csr(), certificateContact)
+        .validationMethod(ValidationMethod.EMAIL)
+        .approverEmail(approvers.get(0))
+        .webServerType(WebServerType.APACHE));
+
+// 4. Wait for issuance, then download
+CertificateStatus status = client.ssl().refreshStatus(certificateId);
+if (status.isIssued()) {
+    CertificateContent content = client.ssl().getContent(certificateId);
+    Files.writeString(Path.of("fullchain.pem"), content.fullChain());
+}
+
+CertificateDetails details = client.ssl().get(certificateId);   // subscription, configuration, contacts
+client.ssl().reissue(new ReissueCertificateRequest(certificateId).csr(newCsr).privateKey(newKey));
+client.ssl().revoke(certificateId);                              // cannot be undone
+```
+
+**Sertifikaları listeleme ve kimlik bulma**
+
+```java
+Page<CertificateListItem> page = client.ssl().list(new ListCertificatesRequest().domainName("example.com"));   // newest first
+
+client.ssl().listAll().forEach(c ->
+        System.out.println(c.certificateId() + " " + c.domainName() + " " + c.status() + " " + c.subscriptionExpiresAt()));
+
+// The approver addresses of a certificate you already have
+List<String> approverEmails = client.ssl().getApproverEmails(certificateId);
+```
+
+**Yenileme** (bu işlem bakiyenizden ücret alır)
+
+```java
+// Allowed from 30 days before details.subscription().expiresAt(). The renewal is a new certificate with its own ID.
+SslOperationResult renewal = client.ssl().renew(certificateId);
+client.ssl().configure(new ConfigureCertificateRequest(renewal.certificateId(), newCsr, certificateContact)
+        .validationMethod(ValidationMethod.EMAIL)
+        .approverEmail(approvers.get(0))
+        .webServerType(WebServerType.APACHE));
+```
+
+Satın alınan veya yenilenen bir sertifika 15 gün içinde yapılandırılmalıdır; aksi halde iptal edilir. Yenilemek için
+önce `renew`, ardından yeni kimlikle `configure` çağırın. `purchase` ile yeniden satın almayın: bu, satın alma fiyatı
+üzerinden ayrı bir satın alma olur ve eski sertifika hiçbir zaman yenilenmiş olarak işaretlenmez. Boş bir sertifika
+kimliği, hiçbir şey gönderilmeden önce `IllegalArgumentException` fırlatır.
+
+<a id="hosting"></a>
+
+### Hosting
+
+```java
+List<HostingPackage> packages = client.hosting().listPackages();
+HostingCreateResult created = client.hosting().create("example.com", "starter-linux");   // charges the balance
+HostingStatus status = client.hosting().getStatus("example.com");                         // panel access once ready
+HostingService hosting = client.hosting().get("example.com");
+List<ServicePlan> plans = client.hosting().listPlans();
+```
+
+<a id="orders-and-products"></a>
+
+### Siparişler ve ürünler
+
+```java
+Order order = client.orders().get("ORDER-CODE");
+
+client.products().getTld("com").ifPresent(com -> System.out.println(
+        com.registrationPrice(1).map(Tld.Price::price).orElse(null) + ", DNSSEC: " + com.supportsDnssec()));
+
+client.products().listAllTlds(new ListTldsRequest().currency("USD")).forEach(tld -> System.out.println(tld.name()));
+
+ProductPrice price = client.products().getPrice("com", OrderType.RENEW, 1);
+Page<SslProduct> ssl = client.products().listSslProducts(new ListSslProductsRequest().isWildcard(true));
+```
+
+<a id="requests-and-baserequest"></a>
+
+## İstekler ve `BaseRequest`
+
+Her işlem bir istek sınıfıdır; örneğin `RenewDomainRequest`, `ListDomainsRequest` veya `AddDnsRecordRequest`.
+Yukarıdaki istemci metotları bunları sizin yerinize oluşturur; isterseniz bunları kendiniz de oluşturup gönderebilirsiniz:
+
+```java
+RenewDomainRequest request = new RenewDomainRequest("example.com", 2);
+System.out.println(request + " is " + request.safety());   // "POST domains/renew is BILLABLE"
+
+DomainOperationResult result = client.send(request);
+
+// The same, with the HTTP details: correlation ID, soft-quota state, attempts, duration
+ApiResponse<DomainOperationResult> response = client.sendWithResponse(request);
+System.out.println(response.correlationId() + " quota " + response.quota());
+```
+
+Tüm istekler iki temel sınıftan birinden türer:
+
+| Temel sınıf | Ne için |
+|---|---|
+| `BaseRequest<T>` | Her işlem. `T` yanıt tipidir; hiçbir şey döndürmeyen işlemler (kilitleme, kilit açma, DNS kaydı ekleme, ...) için `Void`. |
+| `PagedRequest<T>` | Liste işlemleri. `skipCount`, `maxResultCount` ve `sorting` ekler, `listAll` ile çalışır. |
+
+Bir istek, ne olduğunu birkaç override ile bildirir: `method()`, `path()` (`/api/v1/` altında) ve `safety()`. Sorgu
+parametreleri `addQueryParameters` içinde eklenir, JSON gövdesi `body()` metodundan gelir (`JsonBody` bir gövde oluşturur
+ve null değerleri dışarıda bırakır), göndermeden önceki denetimler ise `validate()` içine yazılır. SDK'nın henüz
+kapsamadığı bir uç noktayı çağırmak için kendi isteğinizi yazın:
+
+```java
+public final class GetDomainNotesRequest extends BaseRequest<DomainNotes> {
+    private final String domainName;
+
+    public GetDomainNotesRequest(String domainName) {
+        this.domainName = domainName;
+    }
+
+    @Override public HttpMethod method() { return HttpMethod.GET; }
+    @Override public String path() { return "domains/notes"; }               // below /api/v1/
+    @Override public OperationSafety safety() { return OperationSafety.READ; }
+
+    @Override protected void addQueryParameters(QueryParameters query) {
+        query.add("DomainName", domainName);
+    }
+
+    @Override protected void validate() {
+        require(domainName, "domainName");
+    }
+}
+
+public record DomainNotes(List<String> notes) { }
+
+DomainNotes notes = client.send(new GetDomainNotesRequest("example.com"));
+```
+
+İsteğiniz, yerleşik isteklerin aldığı her şeyi alır: kimlik bilgileri, güvenlik sınıfına göre yeniden denemeler, hız
+ayarlama, salt-okunur mod ve hata yönetimi. Yanıt tipi `extends BaseRequest<DomainNotes>` ifadesinden okunur;
+`responseType()` metodunu yalnızca generic istek sınıfları için override edin. Bir yazma işlemi tekrarlanırken
+güvenliyse `isIdempotent()` metodunu override edin.
+
+<a id="errors"></a>
+
+## Hatalar
+
+Başarısız her istek bir `DomainNameApiException` (unchecked) fırlatır. Geçersiz argümanlar, hiçbir şey gönderilmeden
+önce `IllegalArgumentException` fırlatır.
+
+```java
+try {
+    client.domains().renew("example.com", 1);
+} catch (DomainNameApiException e) {
+    if (e.kind() == ApiErrorKind.VALIDATION) {
+        System.out.println(e.code() + ": " + e.getMessage());   // Dna.DomainService:Domain:10007: ...
+        e.validationErrors().forEach(field -> System.out.println("  " + field));
+    } else if (e.isOutcomeUnknown()) {
+        // A billable or changing request failed on the network: it may have reached the API.
+        // Check the state before sending it again.
+        DomainDetails details = client.domains().get("example.com");
+    } else {
+        throw e;
+    }
+}
+```
+
+| Metot | Anlamı |
+|---|---|
+| `kind()` | Sabit bir sınıflandırma (aşağıdaki tablo). Mesaja göre değil, buna göre dallanın. |
+| `code()` | API'nin hata kodu (örneğin `Dna.DomainService:Domain:10007`) veya aşağıdaki SDK kodlarından biri. |
+| `getMessage()` | Ne olduğu. Kalıp mesajların yerine API'nin ayrıntıları konur. |
+| `statusCode()` | HTTP durumu; yanıt gelmediyse null. |
+| `details()`, `validationErrors()` | API'den gelen ek ayrıntılar ve alan düzeyindeki sorunlar. |
+| `correlationId()` | Geçidin `X-Correlation-Id` değeri. Destekle iletişime geçerken bunu belirtin. |
+| `hint()` | Sonra ne yapılacağına dair kısa bir öneri. |
+| `isRetryable()` | Aynı isteği daha sonra tekrarlamanın başarılı olup olamayacağı. |
+| `isOutcomeUnknown()` | Bir şeyi değiştiren istek ağda başarısız oldu, bu yüzden çalışmış olabilir. |
+| `operation()`, `safety()` | Başarısız olan istek (`POST domains/renew`) ve onun güvenlik sınıfı. |
+| `retryAfter()`, `responseBody()` | Geçidin `Retry-After` değeri ve ham yanıt. |
+
+| `kind()` | Ne zaman |
+|---|---|
+| `AUTHENTICATION` | Yanlış veya eksik kimlik bilgileri ya da bu ortamda bilinmeyen veya askıya alınmış bir bayi (401, yönlendirme). |
+| `FORBIDDEN` | Kimlik doğrulandı ama izin yok (403). |
+| `NOT_FOUND` | Alan adı, iletişim kişisi, sipariş veya başka bir kaynak yok (404). |
+| `VALIDATION` | API girdiyi reddetti ya da bir iş kuralı başarısız oldu: hatalı alan, kilitli alan adı, yetersiz bakiye (400, 422). |
+| `CONFLICT` | Kaynağın durumu işleme izin vermiyor (409). |
+| `RATE_LIMITED` | Otomatik yeniden denemelerden sonra hâlâ hız sınırında (429). |
+| `SERVER` | Sunucu tarafı hata (5xx). Çoğu zaman geçicidir. |
+| `NETWORK`, `TIMEOUT` | Yanıt yok: DNS, TLS, proxy, bağlantı sıfırlanması veya zaman aşımı içinde yanıt gelmemesi. |
+| `READ_ONLY` | Salt-okunur mod tarafından engellendi; hiçbir şey gönderilmedi. |
+| `UNKNOWN` | SDK'nın okuyamadığı bir yanıt dahil, geri kalan her şey. |
+
+SDK'nın kendisinin belirlediği kodlar:
+
+| Kod | Anlamı |
+|---|---|
+| `INVALID_RESELLER` | Geçit, askıya alma sayfasına yönlendirdi: reseller ID **bu ortamda** bilinmiyor, etkin değil veya askıya alınmış. |
+| `INVALID_API_KEY` | Anahtar bayiyle eşleşmiyor. Canlı ortam ve OTE anahtarları farklıdır. |
+| `MISSING_API_KEY`, `MISSING_RESELLER_ID`, `NO_CREDENTIALS` | Bir kimlik bilgisi boş. |
+| `SUBRESELLER_NOT_ALLOWED` | Alt bayi hesapları API'yi kullanamaz. Ana bayinin kimlik bilgilerini kullanın. |
+| `UNAUTHORIZED` | Diğer tüm 401 yanıtları. |
+| `RATE_LIMITED` | Yeniden denemelerden sonra 429. |
+| `NETWORK`, `TIMEOUT` | Yanıt gelmedi. |
+| `READ_ONLY` | Salt-okunur mod tarafından engellendi. |
+| `EMPTY_RESPONSE`, `INVALID_RESPONSE` | Başarılı bir yanıt boştu veya okunamadı. |
+| `HTTP_<status>` | API hata kodu göndermedi. |
+
+Bir istek beklerken thread kesintiye uğrarsa (interrupt), SDK kesinti bayrağını yeniden ayarlar ve bir API hatası yerine
+`CancellationException` fırlatır.
+
+<a id="safety-retries-and-rate-limits"></a>
+
+## Güvenlik, yeniden denemeler ve hız sınırları
+
+Her isteğin bir güvenlik sınıfı vardır; `dna` CLI'nin kullandığıyla aynıdır:
+
+| `OperationSafety` | Anlamı | Örnekler |
+|---|---|---|
+| `READ` | API POST veya PUT kullansa bile yan etkisi yok | arama, ayrıntılar, listeler, yenileme ve transfer denetimleri, CSR üretimi |
+| `WRITE` | Geri alınabilen ücretsiz bir değişiklik | DNS kayıtları, kilit, gizlilik, nameserver'lar, iletişim bilgileri |
+| `BILLABLE` | Bakiyenizden ücret alır | kayıt, yenileme, transfer, geri yükleme, SSL satın alma ve yenileme, hosting siparişi |
+| `DESTRUCTIVE` | Bir şeyi siler veya geri alması zordur | DNS kaydı silme, DNSSEC kaldırma, sertifika iptali |
+
+- **Salt-okunur mod** (`readOnly(true)` veya `DNA_READ_ONLY=true`), `READ` olmayan her şeyi gönderilmeden önce engeller.
+  Keşif yaparken, raporlarda ve panolarda kullanın.
+- **Yeniden denemeler.** 429 yanıtları her zaman, `Retry-After` dikkate alınarak yeniden denenir. Bu, ücretli istekler
+  için bile güvenlidir, çünkü geçit bunları hiçbir şey çalışmadan önce reddeder. Ağ hataları, zaman aşımları ve
+  502/503/504 yanıtları yalnızca okumalarda (ve nameserver değiştirme gibi tekrarlanması güvenli yazmalarda)
+  yeniden denenir. Bir kayıt veya yenileme asla iki kez gönderilmez.
+- **Hız ayarlama.** Geçit, anahtar başına saniyede 5 isteğe, alan adı aramalarında saniyede 2 isteğe ve DNS bölge
+  çağrılarında saniyede 20 isteğe izin verir. İstemci, istekleri bu sınırların altında kalacak şekilde aralıklar
+  (bölge çağrıları 1 saniye arayla). Alan adı bilgisi ve TLD listesi hız sınırına tabi değildir.
+- **Yumuşak kota.** Aramalar ve bilgi sorguları 1 puan, diğer her şey 10 puan harcar. 200 puanın üzerinde geçit her
+  isteği 5 saniyeye kadar yavaşlatır; puanlar dakikada %20 azalır. `sendWithResponse`, durumu `quota()` içinde gösterir.
+
+<a id="asynchronous-calls"></a>
+
+## Asenkron çağrılar
+
+İstemci senkrondur: her metot yanıt gelene kadar bekler (bloklar); bu, sunucu kodu ve sanal thread'ler için uygundur.
+`sendAsync` ve `sendWithResponseAsync`, bir isteği istemcinin executor'ında çalıştırır ve bir `CompletableFuture` döndürür:
+
+```java
+CompletableFuture<DomainDetails> details = client.sendAsync(new GetDomainRequest("example.com"));
+details.thenAccept(d -> System.out.println(d.expirationDate()));
+```
+
+Future, senkron metotların fırlattığı istisnaların aynısıyla başarısız olur (`join()` bunları bir `CompletionException`
+içine sarar). Kendi executor'ınızı `builder().executor(...)` ile ayarlayın; örneğin Java 21'de
+`Executors.newVirtualThreadPerTaskExecutor()`.
+
+<a id="testing-your-code"></a>
+
+## Kodunuzu test etme
+
+SDK'nın tek ihtiyacı bir HTTP uç noktasıdır. SDK'yı kullanan kodu API'yi çağırmadan test etmek için `baseUri`'yi yerel
+bir sunucuya, örneğin JDK'nın yerleşik sunucusuna yönlendirin:
+
+```java
+HttpServer server = HttpServer.create(new InetSocketAddress(InetAddress.getLoopbackAddress(), 0), 0);
+server.createContext("/api/v1/deposit/accounts/me", exchange -> {
+    byte[] body = "{\"resellerName\":\"Test\",\"usdBalance\":10}".getBytes(StandardCharsets.UTF_8);
+    exchange.sendResponseHeaders(200, body.length);
+    exchange.getResponseBody().write(body);
+    exchange.close();
+});
+server.start();
+
+DomainNameApiClient client = DomainNameApiClient.builder()
+        .credentials("test", "test")
+        .baseUri(URI.create("http://127.0.0.1:" + server.getAddress().getPort()))
+        .paceRequests(false)
+        .build();
+
+ResellerAccount account = client.account().get();   // usdBalance() == 10
+```
+
+`httpClient(...)` ile kendi `HttpClient` alt sınıfınızı da verebilir, mock'larınız için istisnaları
+`DomainNameApiException.builder(...)` ile oluşturabilirsiniz. Gerçek API'ye karşı testler için, kendi anahtarıyla OTE'yi kullanın.
+
+<a id="project-layout"></a>
+
+## Proje yapısı
+
+```
+src/main/java/io/github/domainreseller/dna/
+├── DomainNameApiClient.java   The entry point: builder, area clients, send, retries, pacing
+├── BaseRequest, PagedRequest, QueryParameters, JsonBody, Page, ApiResponse, DomainNameApiException, enums
+├── internal/                  JSON settings, error parsing, the rate-limit pacer (not public API)
+├── accounts/   AccountClient  Balances, profile and transactions
+├── contacts/   ContactsClient Contact handles
+├── domains/    DomainsClient  Domains, plus forwarding(), childNameServers() and documents()
+├── dns/        DnsClient      Zone records
+├── dnssec/     DnssecClient   DS records
+├── ssl/        SslClient      Certificates
+├── hosting/    HostingClient  Hosting packages and services
+├── orders/     OrdersClient   Orders
+└── products/   ProductsClient TLDs, SSL products and prices
+```
+
+Her alan paketi aynı biçimdedir: bir `XxxClient`, işlem başına bir istek sınıfı (`XxxRequest`) ve yanıtlarının
+modelleri ile enum'ları.
+
+<a id="development"></a>
+
+## Geliştirme
 
 ```bash
-mvn -Pexamples -DskipTests compile
-DNA_RESELLER_ID=... DNA_API_KEY=... java -cp target/classes GetDetails
+mvn verify                          # build and run the tests
+mvn -Pexamples -DskipTests compile  # also compile the examples
 ```
 
-### Domain Kaydı
-
-Not: .tr alan adları için ek parametreler gereklidir. `additionalAttributes` parametresi, .tr gibi
-ek bilgi gerektiren alan adları için kullanılır.
-
-```java
-Map<String, Object> contact = new LinkedHashMap<>();
-contact.put("FirstName", "John");
-contact.put("LastName", "Doe");
-contact.put("Company", "Example Corp");
-contact.put("EMail", "john.doe@example.com");
-contact.put("AddressLine1", "123 Lorem Street");
-contact.put("AddressLine2", "Suite 456");
-contact.put("City", "Springfield");
-contact.put("Country", "US");
-contact.put("Fax", "1234567890");
-contact.put("FaxCountryCode", "1");
-contact.put("Phone", "9876543210");
-contact.put("PhoneCountryCode", 1);
-contact.put("ZipCode", "12345");
-contact.put("State", "IL");
-
-Map<String, Object> contacts = new LinkedHashMap<>();
-contacts.put("Administrative", contact);
-contacts.put("Billing", contact);
-contacts.put("Technical", contact);
-contacts.put("Registrant", contact);
-
-Map<String, Object> result = dna.registerWithContactInfo(
-    "example.com",
-    1,                                                  // süre (yıl)
-    contacts,
-    Arrays.asList("ns1.example.com", "ns2.example.com"), // boş liste = ns1/ns2.domainnameapi.com
-    true,                                               // kayıt kilidi (registrar lock)
-    false                                               // gizlilik koruması
-);
-
-// .tr alan adları: 7. parametre olarak TRABIS öznitelikleri
-Map<String, Object> trabis = new LinkedHashMap<>();
-trabis.put("TRABISDOMAINCATEGORY", 1);           // 1 = bireysel (Owner), 0 = kurumsal (Corporate)
-trabis.put("TRABISCITIZIENID", "11111111111");   // bireysel: T.C. kimlik numarası
-// kurumsal: trabis.put("TRABISTAXOFFICE", "Istanbul VD"); trabis.put("TRABISTAXNUMBER", "1234567890");
-dna.registerWithContactInfo("example.com.tr", 1, contacts,
-    Arrays.asList("ns1.example.com", "ns2.example.com"), true, false, trabis);
-```
-
-İletişim bilgileri düz (`AddressLine1`, `Phone`, `PhoneCountryCode`) ya da iç içe
-(`Address.Line1`, `Phone.Phone.Number`) yapıda olabilir. Eksik veya düzensiz alanlar gönderilmeden önce
-tamamlanır ve normalleştirilir (bkz. `validateContact`).
-
-<details>
-<summary>Örnek Çıktı</summary>
-
-```json
-{
-    "data": {
-        "ID": 0,
-        "Status": "Active",
-        "DomainName": "",
-        "AuthCode": "",
-        "LockStatus": "false",
-        "PrivacyProtectionStatus": "false",
-        "IsChildNameServer": "false",
-        "Contacts": {
-            "Billing": {"ID": 0},
-            "Technical": {"ID": 0},
-            "Administrative": {"ID": 0},
-            "Registrant": {"ID": 0}
-        },
-        "Dates": {"Start": "", "Expiration": "2027-11-09T12:00:00", "RemainingDays": 366},
-        "NameServers": [],
-        "Additional": [],
-        "ChildNameServers": []
-    },
-    "result": "OK"
-}
-```
-Kayıt uç noktası kısa bir makbuzla yanıt verir; kaydın tamamı için ardından `getDetails` çağırın.
-Gateway siparişi reddettiğinde (`"success": false`), sonuç `REGISTER_DOMAIN` kodlu ve gateway'in
-mesajını içeren bir hatadır.
-</details>
-
-### Domain Yenileme
-
-```java
-Map<String, Object> result = dna.renew("example.com", 1);
-```
-
-<details>
-<summary>Örnek Çıktı</summary>
-
-```json
-{"result": "OK", "data": {"ExpirationDate": "2027-11-09T12:00:00"}}
-```
-Reddedilen bir yenileme `RENEW_DOMAIN` kodlu bir hata döndürür.
-</details>
-
-### Domain Transferi
-
-```java
-// Transferde kişi bilgileri hiçbir zaman gönderilmez: registrar bunları domain ile birlikte devralır
-Map<String, Object> result = dna.transfer("example.com", "Xjk9Vtr2", 1);
-
-// Önce alan adının bu auth koduyla transfer edilip edilemeyeceğini kontrol edin
-Map<String, Object> check = dna.checkTransfer("example.com", "Xjk9Vtr2");
-
-// Bekleyen transferler
-dna.cancelTransfer("example.com");   // gelen
-dna.approveTransfer("example.com");  // giden
-dna.rejectTransfer("example.com");   // giden
-```
-
-<details>
-<summary>Örnek Çıktı</summary>
-
-`transfer`, kayıt işlemiyle aynı yapıyı döndürür (gateway transferi reddettiğinde `TRANSFER_DOMAIN`
-kodlu bir hata). `checkTransfer`:
-
-```json
-{
-    "result": "OK",
-    "data": {
-        "TransferAvailabilityStatus": true,
-        "AuthCodeIsRequired": true,
-        "AuthCodeIsValid": true,
-        "UserTransferRequired": false,
-        "TransferLock": false,
-        "Message": "Domain can be transferred",
-        "MessageKey": "TransferAvailable",
-        "Additional": []
-    }
-}
-```
-Alan adı transfer edilemiyorsa `result` değeri `"ERROR"` olur ve
-`error` şu şekildedir: `{"Code": "TRANSFER_NOT_AVAILABLE", "Message": "Domain is locked", "Details": "TransferLocked"}`.
-`cancelTransfer` / `approveTransfer` / `rejectTransfer` şunu döndürür:
-`{"result": "OK", "data": {"DomainName": "example.com", "Status": "Cancelled"}}`
-(`Approved` / `Rejected`).
-</details>
-
-### Alan Adı Listesi
-
-```java
-Map<String, Object> all = dna.getList();   // ilk 200 alan adı
-
-Map<String, Object> filters = new LinkedHashMap<>();
-filters.put("PageNumber", 0);               // 0'dan başlar
-filters.put("PageSize", 50);
-filters.put("OrderColumn", "ExpirationDate");
-filters.put("OrderDirection", "DESC");
-filters.put("DomainName", "example");
-Map<String, Object> page = dna.getList(filters);
-```
-
-<details>
-<summary>Örnek Çıktı</summary>
-
-```json
-{
-    "data": {
-        "Domains": [
-            {
-                "ID": 11,
-                "Status": "Active",
-                "DomainName": "example.com",
-                "AuthCode": "",
-                "LockStatus": "true",
-                "PrivacyProtectionStatus": "true",
-                "IsChildNameServer": "false",
-                "Contacts": {
-                    "Billing": {"ID": ""},
-                    "Technical": {"ID": ""},
-                    "Administrative": {"ID": ""},
-                    "Registrant": {"ID": ""}
-                },
-                "Dates": {"Start": "2024-03-15T10:20:30", "Expiration": "2027-03-15T10:20:30", "RemainingDays": 126},
-                "NameServers": ["ns1.example.net", "ns2.example.net"],
-                "Additional": [],
-                "ChildNameServers": []
-            }
-        ]
-    },
-    "result": "OK",
-    "TotalCount": 1
-}
-```
-</details>
-
-### TLD Listesi
-
-```java
-Map<String, Object> result = dna.getTldList(100);   // varsayılan 20
-```
-
-<details>
-<summary>Örnek Çıktı</summary>
-
-```json
-{
-    "data": [
-        {
-            "id": 1,
-            "status": "Active",
-            "maxchar": 63,
-            "maxperiod": 10,
-            "minchar": 1,
-            "minperiod": 1,
-            "tld": "aero",
-            "pricing": {
-                "registration": {"1": "44.9900", "2": "94.9100", "3": "144.8300"},
-                "renew": {"1": "49.9200", "2": "99.8400"},
-                "transfer": {"1": "44.9900"}
-            },
-            "currencies": {"registration": "USD", "renew": "USD", "transfer": "USD"}
-        }
-    ],
-    "result": "OK"
-}
-```
-</details>
-
-### Alan Adı Uygunluk Kontrolü
-
-```java
-Object result = dna.checkAvailability(
-    Arrays.asList("example", "example2"),  // TLD'siz etiketler
-    Arrays.asList("com", "net"),           // TLD'ler, noktalı veya noktasız
-    1,                                     // süre
-    "create"                               // komut (varsayılan "create")
-);
-if (result instanceof List) {
-    for (Object row : (List<?>) result) { /* ... */ }
-}
-```
-
-Tek çağrıda en fazla 20 alan adı × TLD kombinasyonu sorgulanabilir (gateway sınırı).
-
-<details>
-<summary>Örnek Çıktı</summary>
-
-```json
-[
-    {
-        "TLD": "com",
-        "DomainName": "example",
-        "Status": "notavailable",
-        "Command": "create",
-        "Period": 1,
-        "IsFee": false,
-        "Price": "11.9900",
-        "Currency": "USD",
-        "Reason": "Domain exists"
-    },
-    {
-        "TLD": "net",
-        "DomainName": "example2",
-        "Status": "available",
-        "Command": "create",
-        "Period": 1,
-        "IsFee": false,
-        "Price": "13.9900",
-        "Currency": "USD",
-        "Reason": null
-    }
-]
-```
-</details>
-
-### Alan Adı Detayları
-
-```java
-Map<String, Object> result = dna.getDetails("example.com");
-Map<String, Object> fresh  = dna.syncFromRegistry("example.com"); // aynı yapı
-```
-
-<details>
-<summary>Örnek Çıktı</summary>
-
-```json
-{
-    "data": {
-        "ID": 4321,
-        "Status": "Active",
-        "DomainName": "example.com",
-        "AuthCode": "Ab1!xyZ9",
-        "LockStatus": "true",
-        "PrivacyProtectionStatus": "false",
-        "IsChildNameServer": "true",
-        "Contacts": {
-            "Billing": {"ID": "DNA-B-4"},
-            "Technical": {"ID": "DNA-T-3"},
-            "Administrative": {"ID": "DNA-A-2"},
-            "Registrant": {"ID": "DNA-R-1"}
-        },
-        "Dates": {"Start": "2024-03-15T10:20:30", "Expiration": "2027-03-15T10:20:30", "RemainingDays": 126},
-        "NameServers": ["ns1.example.net", "ns2.example.net"],
-        "Additional": {"TRABISDOMAINCATEGORY": "1"},
-        "ChildNameServers": [
-            {"ns": "ns1.example.com", "ip": "192.0.2.11"},
-            {"ns": "ns2.example.com", "ip": ""}
-        ]
-    },
-    "result": "OK"
-}
-```
-</details>
-
-### Nameserver Düzenleme
-
-```java
-Map<String, Object> result = dna.modifyNameServer("example.com",
-    Arrays.asList("ns1.example.com", "ns2.example.com"));
-```
-
-Girdiler gönderilmeden önce boşluklardan arındırılır, küçük harfe çevrilir ve tekrar edenler ayıklanır. Bir `Map` de
-kabul edilir (değerleri kullanılır).
-
-<details>
-<summary>Örnek Çıktı</summary>
-
-```json
-{"result": "OK", "data": {"NameServers": ["ns1.example.com", "ns2.example.com"]}}
-```
-</details>
-
-### Domain Kilidini Aktifleştirme / Kaldırma
-
-```java
-dna.enableTheftProtectionLock("example.com");
-dna.disableTheftProtectionLock("example.com");
-```
-
-<details>
-<summary>Örnek Çıktı</summary>
-
-```json
-{"result": "OK", "data": {"LockStatus": true}}
-```
-</details>
-
-### Child Nameserver'lar
-
-```java
-dna.addChildNameServer("example.com", "ns1.example.com", "192.0.2.10");
-dna.modifyChildNameServer("example.com", "ns1.example.com", "192.0.2.20");
-dna.deleteChildNameServer("example.com", "ns1.example.com");
-```
-
-<details>
-<summary>Örnek Çıktı</summary>
-
-```json
-{"result": "OK", "data": {"NameServer": "ns1.example.com", "IPAdresses": ["192.0.2.10"]}}
-```
-`deleteChildNameServer` şunu döndürür: `{"result": "OK", "data": {"NameServer": "ns1.example.com"}}`.
-</details>
-
-### Domain Gizliliğini Değiştirme
-
-```java
-Map<String, Object> result = dna.modifyPrivacyProtectionStatus("example.com", true);
-
-// Durum, panellerin sakladığı gibi metin de olabilir: "1", "true", "on", "yes" korumayı açar
-dna.modifyPrivacyProtectionStatus("example.com", "off");
-```
-
-İsteğe bağlı üçüncü argüman (`reason`) php-dna uyumluluğu için kabul edilir ancak gönderilmez:
-gateway'de böyle bir alan yoktur.
-
-<details>
-<summary>Örnek Çıktı</summary>
-
-```json
-{"data": {"PrivacyProtectionStatus": true}, "result": "OK"}
-```
-</details>
-
-### Domain İletişim Bilgileri
-
-```java
-Map<String, Object> current = dna.getContacts("example.com");
-
-Map<String, Object> contacts = new LinkedHashMap<>();
-contacts.put("Administrative", contact);
-contacts.put("Billing", contact);
-contacts.put("Technical", contact);
-contacts.put("Registrant", contact);
-Map<String, Object> saved = dna.saveContacts("example.com", contacts);
-```
-
-<details>
-<summary>Örnek Çıktı</summary>
-
-```json
-{
-    "data": {
-        "contacts": {
-            "Administrative": {
-                "ID": "DNA-A-2",
-                "Status": "Active",
-                "AuthCode": "",
-                "FirstName": "Grace",
-                "LastName": "Hopper",
-                "Company": "",
-                "EMail": "grace@example.com",
-                "Type": "Administrative",
-                "Address": {
-                    "Line1": "Example Street 2",
-                    "Line2": "",
-                    "Line3": "",
-                    "State": "DC",
-                    "City": "Washington",
-                    "Country": "US",
-                    "ZipCode": "20001"
-                },
-                "Phone": {
-                    "Phone": {"Number": "2025550100", "CountryCode": "1"},
-                    "Fax": {"Number": "2025550101", "CountryCode": "1"}
-                },
-                "Additional": []
-            },
-            "Billing": {"...": "..."},
-            "Registrant": {"...": "..."},
-            "Technical": {"...": "..."}
-        }
-    },
-    "result": "OK"
-}
-```
-Kişi türleri büyük/küçük harf duyarsız eşleştirilir (`Admin`/`Administrative`, `Tech`/`Technical`,
-`Registrant`/`Owner`, `Billing`); registry'nin döndürdüğü diğer türler bu dördünün ardından korunur.
-`saveContacts` şunu döndürür: `{"result": "OK", "data": {"contacts": {...}}}`.
-</details>
-
-### DNS Zone Kayıtları
-
-Gateway kayıtları küme (set) olarak saklar (ad + tür). Bir kümeye yazmak, kümenin tüm değerlerini değiştirir;
-herhangi bir değere göre silmek ise kümenin tamamını kaldırır. Aşağıdaki değer düzeyindeki yardımcı metotlar okuma,
-birleştirme ve yazma işlemlerini sizin yerinize yapar.
-
-```java
-// Listele (her değer için bir satır)
-dna.getResourceRecords("example.com");
-
-// Diğerlerini koruyarak TEK bir değer ekle / değiştir / kaldır
-dna.addResourceRecordValue("example.com", "@", "MX", "30 mx3.example.com");
-dna.replaceResourceRecordValue("example.com", "www", "A", "192.0.2.10", "192.0.2.20");
-dna.removeResourceRecordValue("example.com", "@", "MX", "30 mx3.example.com");
-
-// Bir kümenin tam olarak bu değerleri içermesini sağla (boş liste kümeyi kaldırır)
-dna.setResourceRecordSet("example.com", "@", "TXT", Arrays.asList("v=spf1 -all"), 3600);
-dna.deleteResourceRecordSet("example.com", "old", "CNAME");
-
-// Düşük seviye: apply=false ile hazırla, ardından tek seferde uygula
-dna.addResourceRecord("example.com", "api", "A", "192.0.2.7", 300, false);
-dna.editResourceRecord("example.com", "www", "www", "A", "192.0.2.6", 600, false);
-dna.deleteResourceRecord("example.com", "test.example.com.", "192.0.2.9", "A", false);
-dna.applyResourceRecords("example.com");
-```
-
-Adlar `""` / `"@"` (apex), bir etiket (`"www"`) ya da tam ad (`"www.example.com."`) olabilir.
-Desteklenen türler: `A, AAAA, ALIAS, CAA, CNAME, DS, MX, NAPTR, PTR, SRV, TLSA, TXT`. TTL
-1..86400 saniye aralığındadır. Gateway art arda gelen isteklere HTTP 429 ile yanıt verdiğinden, zone çağrıları arasında
-en az bir saniye bırakılır (`setZoneMinInterval(seconds)` bu aralığı değiştirir). Sonuçlar, gönderilen büyük harfe
-çevrilmiş türü ve sınırlandırılmış TTL değerini bildirir. Otomatik apply başarısız olursa, yazma işlemi apply
-hatasını döndürür: değişiklik hazırlanmıştır ancak henüz yayında değildir.
-
-<details>
-<summary>Örnek Çıktı</summary>
-
-```json
-{
-    "result": "OK",
-    "data": {
-        "records": [
-            {"Name": "example.com.", "Type": "A", "TTL": 3600, "Content": "192.0.2.1", "Disabled": false},
-            {"Name": "www.example.com.", "Type": "CNAME", "TTL": 300, "Content": "example.com.", "Disabled": false},
-            {"Name": "example.com.", "Type": "MX", "TTL": 3600, "Content": "10 mx1.example.com.", "Disabled": false}
-        ]
-    }
-}
-```
-`addResourceRecordValue`:
-`{"result": "OK", "data": {"Name": "", "Type": "MX", "TTL": 3600, "Contents": ["10 mx1.example.com.", "30 mx3.example.com"]}}`
-— değer zaten mevcutsa: `{..., "Contents": [...], "Changed": false}`.
-</details>
-
-### URL Yönlendirme
-
-```java
-dna.setForwarding("example.com", "https://www.example.org");           // Standart yönlendirme
-dna.setForwarding("example.com", "https://www.example.org", "Frame");  // maskeli
-dna.getForwarding("example.com");
-dna.deleteForwarding("example.com");
-```
-
-<details>
-<summary>Örnek Çıktı</summary>
-
-```json
-{"result": "OK", "data": {"Enabled": true, "RedirectAddress": "https://www.example.org", "ForwardType": "Frame"}}
-```
-Yönlendirme yoksa (gateway'in `Redirect information not found` yanıtı):
-`{"result": "OK", "data": {"Enabled": false, "RedirectAddress": "", "ForwardType": ""}}`. Bilinmeyen bir
-domain gibi diğer tüm hatalar hata olarak döner.
-`deleteForwarding` şunu döndürür: `{"result": "OK", "data": {"DomainName": "example.com", "Removed": true}}`;
-ayarlı bir yönlendirme yoksa `"Removed": false`.
-</details>
-
-### Bayi Bilgileri ve Bakiye Sorgulama
-
-```java
-Map<String, Object> reseller = dna.getResellerDetails();
-Map<String, Object> usd = dna.getCurrentBalance();        // USD
-Map<String, Object> tl  = dna.getCurrentBalance("TRY");   // TRY, EUR, GBP
-```
-
-<details>
-<summary>Örnek Çıktı</summary>
-
-```json
-{
-    "result": "OK",
-    "id": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
-    "active": true,
-    "name": "example-reseller",
-    "balance": "601.64",
-    "currency": "USD",
-    "symbol": "$",
-    "balances": [
-        {"balance": "601.64", "currency": "USD", "symbol": "$"},
-        {"balance": "1250.50", "currency": "TL", "symbol": "TL"}
-    ]
-}
-```
-`getCurrentBalance`:
-```json
-{
-    "ErrorCode": 0,
-    "OperationMessage": "Command completed succesfully.",
-    "OperationResult": "SUCCESS",
-    "Balance": "601.64",
-    "CurrencyId": 2,
-    "CurrencyInfo": null,
-    "CurrencyName": "USD",
-    "CurrencySymbol": "$"
-}
-```
-Hesap yalnızca USD ve TRY bakiyelerini bildirir. Diğer para birimleri (EUR, GBP, ...) için sonuç şöyledir:
-`{"ErrorCode": "BALANCE", "OperationResult": "FAILED", "OperationMessage": "No EUR balance is reported for this account. Available: USD, TRY.", "Balance": "0.00", ...}`.
-</details>
-
-### Yardımcı araçlar (ağ bağlantısı gerektirmez)
-
-```java
-dna.isTrTLD("example.com.tr");   // true
-
-Map<String, Object> raw = new LinkedHashMap<>();
-raw.put("FirstName", " Jo ");
-raw.put("Phone", "+90 (532) 374 33 88");
-raw.put("Country", "Turkey");
-Map<String, Object> clean = dna.validateContact(raw);
-```
-
-`validateContact` eksik alanları yer tutucu değerlerle doldurur, adlardaki rakam ve sembolleri temizler,
-ülke adlarını ISO kodlarına dönüştürür ve telefon numaralarını numara ve ülke kodu olarak ayırır — yani
-kayıt işleminin uyguladığı normalleştirmenin aynısını yapar.
-
-<details>
-<summary>Örnek Çıktı</summary>
-
-```json
-{
-    "FirstName": "Jo",
-    "Phone": "5323743388",
-    "Country": "TR",
-    "LastName": "Isimyok",
-    "AddressLine1": "Addres yok",
-    "City": "ISTANBUL",
-    "State": "ISTANBUL",
-    "ZipCode": "34000",
-    "PhoneCountryCode": "90",
-    "Fax": "",
-    "FaxCountryCode": ""
-}
-```
-</details>
-
-## Hata yönetimi
-
-Ağ metotları API veya ağ sorunlarında hiçbir zaman istisna fırlatmaz; bunun yerine bir hata zarfı döndürür:
-
-```json
-{
-    "result": "ERROR",
-    "error": {
-        "Code": "API_404",
-        "Message": "The domain name you requested could not be found. Please check and try again.",
-        "Details": "The domain could not be found. Please check and try again."
-    }
-}
-```
-
-- Gateway hatalarında `Code` değeri `API_<HTTP status>` (HTTP durum kodu) biçimindedir (`API_400`, `API_404`, `API_429`, `API_500`, ...).
-  Gateway kendi hata kodunu gönderdiğinde bu kod `GatewayCode` olarak korunur
-  (ör. `"GatewayCode": "Dna.DomainService:Domain:10007"`); böylece "domain bulunamadı" durumu diğer 404'lerden
-  ayırt edilebilir. 301/302 yanıtı hatalı kimlik bilgileri anlamına gelir (`Invalid API credentials`).
-- Gateway alan bazında doğrulama hatalarını listelediğinde, `Details` ilgili alanları belirtir, örneğin
-  `Contacts Phone - The field Phone must be a string with a maximum length of 16.`
-- Boş bir hata gövdesi `HTTP 429 - Too Many Requests` ve benzeri bir mesaja dönüştürülür.
-- Zaman aşımları, DNS ve TLS hataları da hata olarak döner; hiçbir zaman boş bir başarı yanıtı olarak değil. Kodları,
-  php-dna'daki gibi curl hata numaralarıyla `CURL_<n>` biçimindedir: zaman aşımı `CURL_28` kodunu taşır ve
-  `Could not reach the DomainNameAPI service: the connection timed out. (...)` şeklindedir; diğer aktarım
-  hataları (`CURL_6` DNS, `CURL_7` bağlantı reddedildi, `CURL_35`/`CURL_60` TLS, `CURL_56` bağlantı sıfırlandı)
-  `Curl error during request: ...` şeklindedir.
-- Gateway reddi (`"success": false`), gateway'in mesajıyla birlikte `REGISTER_DOMAIN`, `TRANSFER_DOMAIN` veya
-  `RENEW_DOMAIN` döndürür.
-- Kütüphane tarafındaki kontroller kendi kodlarını kullanır: `RESPONSE` (boş yanıt), `DOMAIN_RENEW`, `BALANCE`,
-  `TRANSFER_NOT_AVAILABLE`, `ADD_ZONE` / `EDIT_ZONE` / `SET_ZONE` / `DELETE_ZONE`, `SET_FORWARD`, `AVAILABILITY`.
-
-Son çağrıya ait tanılama bilgileri:
-
-```java
-dna.getRequestData();        // {url, method, payload}
-dna.getResponseData();       // çözümlenmiş gövde veya {raw_response: body}
-dna.getResponseHeaders();    // {url, http_code, content_type, total_time, headers}
-dna.getParsedResponseData(); // çözümlenmiş gövde veya hatanın {Code, Message, Details} bilgisi
-dna.getLastFunction();       // "request:GET domains/info"
-dna.getServiceUrl();
-```
-
-## Test modu
-
-OTE test ortamını (`https://ote.domainresellerapi.com/api/v1`) kullanmak için yapıcı metodun üçüncü argümanı olarak
-`true` (veya `"true"`, `"1"`, `"on"`, `"yes"`) verin. `setServiceUrl(url)` ile istemciyi
-başka herhangi bir temel URL'ye yönlendirebilirsiniz.
-
-## Hata raporlama (telemetri)
-
-Bir API çağrısı başarısız olduğunda kütüphane, DomainNameAPI'nin kendi hata izleme sistemine (Sentry) bir hata raporu
-gönderebilir. Başarılı çağrıların küçük ve rastgele bir kısmı (%4 ile birlikte 1 saniyeden yavaş süren tüm çağrılar)
-performans kaydı olarak gönderilir. Raporlar arka planda gönderilir; çağrınızı asla bekletmez veya bozmaz.
-Hata raporlama **varsayılan olarak açıktır**; olaylar kütüphane sürümüyle birlikte `application=DomainNameAPI-Java`
-etiketiyle işaretlenir.
-
-**Gönderilen bilgiler:**
-
-- hata kodu ve mesajı
-- çağrılan uç noktanın yolu ve HTTP metodu
-- çağrı süresi
-- kütüphane sürümü ve Java sürümü
-- reseller ID ve alan adı
-- sunucunun genel (public) IP adresi (`api.ipify.org` üzerinden sorgulanır)
-- işletim sistemi kullanıcı adı
-- alan adının iletişim bilgileri dahil API isteği ve yanıtı; yalnızca kimlik bilgileri maskelenir — EPP/auth kodları, API anahtarları, parolalar ve token'lar `***` ile değiştirilir
-
-**Asla gönderilmeyenler:** okunabilir biçimde EPP/auth kodları, API anahtarları, parolalar veya token'lar.
-
-**Neden ve ne kadar süreyle:** veriler yalnızca kullanım ölçümü ve sorunların erken teşhisi için kullanılır; DomainNameAPI'nin kendi Sentry sunucusunda 30 gün saklanır ve ardından otomatik olarak silinir.
-
-**Nasıl kapatılır:**
-
-```java
-DomainNameApi dna = new DomainNameApi(resellerId, apiKey);
-dna.setErrorReportingEnabled(false);   // hiçbir şey gönderme
-dna.setTelemetryMinimal(true);         // veya: yalnızca kod, mesaj, uç nokta, süre, sürümler, reseller ID
-```
-
-> 🔒 **Güvenlik:** TLS sertifika doğrulaması açıktır. CA deposu güncel olmayan bir sunucuda
-> `dna.setSslVerification(false);` ile kapatılabilir — bu önerilmez; daha doğru çözüm
-> Java CA deposunu güncellemektir.
-
-## İleri düzey
-
-- **Özel HTTP katmanı:** `dna.setTransport(HttpTransport)` varsayılan `java.net.http`
-  aktarım katmanının yerini alır (proxy'ler, özel TLS, kayıt alma, testler).
-- **Zaman aşımları:** çağrı başına 30 sn, bağlantı için 10 sn.
-- **User-Agent:** her istek `User-Agent: DomainNameAPI-Java/1.0.1` başlığını gönderir; gateway'in önündeki Cloudflare
-  varsayılan istemci tanımlayıcılarını reddeder.
-
-## Testler
+Yerel bir JDK yoksa Docker kullanın:
 
 ```bash
-mvn verify
-# or without a local JDK/Maven:
-docker run --rm -v "$PWD":/src -v dna-m2:/root/.m2 -w /src maven:3.9-eclipse-temurin-17 mvn -q verify
+docker run --rm -v "$PWD":/src -w /src maven:3.9-eclipse-temurin-17 mvn -B verify
 ```
 
-| Test | Açıklama |
-|------|-------------|
-| `ConformanceTest` | php-dna'nın 134 uyumluluk fikstürünün tamamını çalıştırır (`src/test/resources/conformance/`): gönderilen istekler ve döndürülen değerler php-dna ile birebir eşleşmelidir |
-| `HttpLayerTest` | Başlıklar, sorgu dizeleri, JSON gövdeleri, test modu, çağrı aralığı denetimi, gerçek `java.net.http` aktarım katmanı |
-| `ErrorMappingTest` | Gateway hata eşlemesi, aktarım hataları, doğrulama hataları |
-| `TelemetryTest` | Kimlik bilgisi maskeleme, sınıflandırma, minimal mod, olay yapısı |
-| `UtilitiesTest` | `isTrTLD`, `validateContact`, PHP uyumlu biçimlendirme, JSON kodlayıcı/çözücü |
+Testler gerçek API'yi asla çağırmaz: sahte bir `HttpClient` ve aktarım katmanı için 127.0.0.1 üzerinde yerel bir HTTP
+sunucusu kullanır. CI, testleri Java 17, 21 ve 25 üzerinde çalıştırır.
 
-Hiçbir test yerel makine dışındaki ağa erişmez.
+`src/test/resources/openapi.json`, `dna` CLI'nin içine gömdüğü API dokümanıdır. `SpecCoverageTest`, içindeki her
+işlemin, CLI'nin güvenlik sınıfıyla birlikte tam olarak bir istek sınıfına sahip olduğunu ve her isteğin yalnızca
+dokümanda tanımlanan sorgu parametrelerini ve gövde özelliklerini gönderdiğini denetler. API'ye yeni bir işlem
+eklendiğinde dokümanı güncelleyin; istek yazılana kadar test başarısız olur.
 
-<hr style="border: 4px solid #000; border-style: dashed;">
+<a id="upgrading-from-1x"></a>
 
-## Dönüş ve Hata Kodları ile Açıklamaları
+## 1.x'ten yükseltme
 
-| Kod  | Açıklama                                       | Detay                                                                                                                                                          |
-|------|------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| 1000 | Komut başarıyla tamamlandı                     | İşlem başarılı.                                                                                                                                                |
-| 1001 | Komut başarıyla tamamlandı; işlem beklemede    | İşlem başarılı. Ancak işlem şu anda tamamlanmak üzere kuyruğa alınmış durumda.                                                                                 |
-| 2003 | Gerekli parametre eksik                        | Parametre eksik hatası. Örneğin, iletişim bilgilerinde telefon girişi yapılmamış.                                                                              |
-| 2105 | Nesne yenileme için uygun değil                | Domain durumu yenilemeye uygun değil, güncelleme işlemlerine karşı kilitli. Durum "clientupdateprohibited" olmamalıdır. Başka durum koşullarından kaynaklanıyor olabilir. |
-| 2200 | Kimlik doğrulama hatası                        | Yetkilendirme hatası; güvenlik kodu hatalı veya domain başka bir kayıt firmasında kayıtlı.                                                                     |
-| 2302 | Nesne mevcut                                   | Domain adı veya nameserver bilgisi veritabanında zaten mevcut. Kayıt yapılamaz.                                                                                |
-| 2303 | Nesne mevcut değil                             | Domain adı veya nameserver bilgisi veritabanında mevcut değil. Yeni kayıt gereklidir.                                                                          |
-| 2304 | Nesne durumu işleme izin vermiyor              | Domain durumu güncellemeye uygun değil, güncelleme işlemlerine karşı kilitli. Durum "clientupdateprohibited" olmamalıdır. Başka durum koşullarından kaynaklanıyor olabilir. |
+2.0 yeni bir SDK'dır. 1.x, PHP kütüphanesinin bir uyarlamasıydı ve tipsiz `Map` zarfları döndürüyordu; 2.0'da tipli
+istekler ve modeller, istisnalar ve bir builder vardır.
 
-| KOD  | DETAY                                                                                                                                |
-|------|--------------------------------------------------------------------------------------------------------------------------------------|
-| 101  | ({0}) için ayrıntılı sistem hatası!                                                                                                  |
-| 102  | ({0}) için ayrıntılı çoklu hata!                                                                                                     |
-| 103  | ({0}) için ayrıntılı bilinmeyen hata!                                                                                                |
-| 200  | API komutu bulunamadı ({0})!                                                                                                         |
-| 210  | API servisi bulunamadı ({0})!                                                                                                        |
-| 211  | API servis sağlayıcısı ayarlanmamış!                                                                                                 |
-| 300  | Bayi bulunamadı!                                                                                                                     |
-| 301  | Mevcut IP adresinizin erişim yetkisi yok. Lütfen yetkili bir IP adresinden bağlandığınızdan emin olun ve tekrar deneyin              |
-| 310  | TLD desteklenmiyor!                                                                                                                  |
-| 320  | API bulunamadı!                                                                                                                      |
-| 321  | Para birimi desteklenmiyor!                                                                                                          |
-| 330  | Gerekli parametre(ler) ayarlanmamış ({0}).                                                                                           |
-| –    | Tüm iletişim nesnelerini eksiksiz gönderdiğinizden emin olun                                                                         |
-| 340  | Fiyat tanımı bulunamadı ({0}[{1}]-{2}{3}).                                                                                           |
-| 350  | Yetersiz bayi bakiyesi. (Bayi Id : {0} - Mevcut Bakiye : {1} {2}).                                                                   |
-| 350  | Muhasebe para birimi eşleşmiyor veya bakiye yetersiz.                                                                                |
-| 360  | ({0}) alanı için geçersiz API isteği.                                                                                                |
-| 360  | API kotası aşıldı!                                                                                                                   |
-| 361  | İstek sınırlama (throttle) hatası!                                                                                                   |
-| 362  | Premium domain şu anda kayıt için uygun değil.                                                                                       |
-| 363  | Domain otomatik yenileme döneminde olduğu için işlem iptal edildi                                                                    |
-| 364  | Bu domain, kayıt otoritesindeki (registry) bir sorun nedeniyle şu anda işlem için kullanılamıyor                                    |
+| 1.x | 2.0 |
+|---|---|
+| `new DomainNameApi(id, key, true)` | `DomainNameApiClient.create(id, key, ApiEnvironment.OTE)` |
+| `dna.getResellerDetails()`, `dna.getCurrentBalance()` | `client.account().get()` / `getProfile()` |
+| `dna.checkAvailability(...)` | `client.domains().search(...)` / `bulkSearch(...)` |
+| `dna.getList()` | `client.domains().list()` / `listAll()` |
+| `dna.getDetails(domain)` | `client.domains().get(domain)` |
+| `dna.registerWithContactInfo(...)` | `client.domains().register(...)` |
+| `dna.renew(domain, period)` | `client.domains().renew(domain, years)` |
+| `dna.transfer(domain, eppCode, period)` | `client.domains().transfer(domain, authCode, years)` |
+| `dna.modifyNameServer(...)` | `client.domains().setNameServers(...)` |
+| `dna.enableTheftProtectionLock(domain)` | `client.domains().lock(domain)` |
+| `dna.modifyPrivacyProtectionStatus(...)` | `client.domains().setPrivacyProtection(...)` |
+| `dna.saveContacts(...)` | `client.domains().updateContacts(...)` |
+| `dna.addChildNameServer(...)` | `client.domains().childNameServers().add(...)` |
+| `dna.getResourceRecords(domain)` | `client.dns().list(domain)` |
+| `dna.addResourceRecord(...)` | `client.dns().add(...)` |
+| `dna.setResourceRecordSet(...)` | `client.dns().replace(...)` |
+| `dna.applyResourceRecords(domain)` | `client.dns().apply(domain)` |
+| `dna.setForwarding(...)` | `client.domains().forwarding().set(...)` |
+| `dna.getTldList()` | `client.products().listAllTlds()` |
+| `result.get("result").equals("ERROR")` | `catch (DomainNameApiException e)` |
 
-| KOD  | DETAY                                                                                       |
-|------|---------------------------------------------------------------------------------------------|
-| 400  | Geçersiz iletişim bilgisi ({0}).                                                            |
-| 401  | İletişim bilgisi senkronize edilemiyor.                                                     |
-| 402  | Kayıt otoritesinden (registry) iletişim bilgilerine erişim yok.                             |
-| 403  | SİSTEMDE EKSİK BİLGİ VAR. VARSAYILAN BİLGİLERİNİZİ GİRİN VEYA DESTEK EKİBİYLE İLETİŞİME GEÇİN. |
-| 404  | DOMAIN İLETİŞİM BİLGİSİ GÜNCELLENEMİYOR. KAYIT OTORİTESİNDEN (REGISTRY) İZİN GEREKİYOR.     |
-| 410  | İletişim bilgisi bulunamadı.                                                                |
-| 410  | İletişim bilgisi bulunamadı ({0}).                                                          |
-| 420  | {0} iletişim bilgisi için geçersiz API komutu.                                              |
-| 430  | İletişim API'si bulunamadı.                                                                 |
-| 440  | İletişim bilgisi senkronize edilmemiş.                                                      |
-| 450  | Çok fazla domain iletişim bilgisi!                                                          |
-| 451  | İletişim bilgisi güncellemesine devam edilemedi.                                            |
+Java alt sürüm gereksinimi 11'den 17'ye yükselir ve Jackson artık bir bağımlılıktır. 1.x, hata raporlarını Sentry'ye
+gönderiyordu; 2.0, API dışında hiçbir yere hiçbir şey göndermez.
 
-| KOD  | DETAY                                                                                                                                |
-|------|--------------------------------------------------------------------------------------------------------------------------------------|
-| 500  | Geçersiz domain id.                                                                                                                  |
-| 500  | Geçersiz domain id ({0}).                                                                                                            |
-| 501  | Domain senkronize edilemedi ({0})                                                                                                    |
-| 502  | Dahili transfer başarısız oldu                                                                                                       |
-| 503  | Domain kaydı yapılamıyor.                                                                                                            |
-| 504  | Domain bilgileri eşleşmiyor. Önceki: {0}                                                                                             |
-| 505  | IP adresini girin.                                                                                                                   |
-| 506  | Domain transferi başlatıldı ancak iletişim bilgileri okunamadı.                                                                      |
-| 507  | Yetkilendirme hatası.                                                                                                                |
-| 510  | Domain bulunamadı.                                                                                                                   |
-| 511  | Süresi dolmuş domainler bulunamıyor.                                                                                                 |
-| 512  | Domain yenilenemez.                                                                                                                  |
-| 513  | Domain güncellenebilir durumda değil. Güncellenebilmesi için aktif olmalıdır                                                         |
-| 514  | Geri alım (redemption) dönemi bekleniyor.                                                                                            |
-| 520  | "{0}" domaini için geçersiz API komutu.                                                                                              |
-| 530  | Geçersiz domain süresi. Süre {0} ile {1} yıl arasında olmalıdır. İstenen süre {2} yıl.                                               |
-| 540  | Domain, mevcut tarihten itibaren {0} yıldan daha uzun süreye uzatılamaz.                                                             |
-| 550  | Geçersiz domain adı. Domain {0} ile {1} karakter uzunluğunda olmalıdır. İstenen domain adı {2} karakter.                             |
-| 560  | Geçersiz nameserver sayısı. Domain {0} ile {1} arasında nameserver'a sahip olmalıdır. İstenen nameserver sayısı {2}.                 |
-| 561  | Gelen istekte nameserver bilgisi bulunamadı                                                                                          |
-| 570  | "{0}" TLD'si için IDN desteklenmiyor.                                                                                                |
-| 571  | Süre geçersiz.                                                                                                                       |
-| 572  | Komut geçersiz.                                                                                                                      |
-| 573  | Domain adları bulunamadı.                                                                                                            |
-| 574  | TLD adları bulunamadı.                                                                                                               |
-| 575  | Domain güncellenebilir durumda değil. Nameserver'ların güncellenebilmesi için aktif olmalıdır                                        |
-| 576  | Domain, bitiş tarihinden önceki son 1 ay içinde yenilenebilir                                                                        |
-| 580  | "{0}" TLD'si için transfer desteklenmiyor.                                                                                           |
-| 581  | Child nameserver bulunamadı                                                                                                          |
-| 582  | Transfer başka bir bayi tarafından başlatıldı.                                                                                       |
-| 583  | Transfer başlatılamadı. Lütfen destek ekibiyle iletişime geçin.                                                                      |
-| 584  | Nesne durumu işleme izin vermiyor                                                                                                    |
-| 590  | Bu transfer için auth kodu gereklidir.                                                                                               |
-| 591  | Auth kodu geçerli değil.                                                                                                             |
-| 592  | Domain üzerinde transfer kilidi mevcut.                                                                                              |
-| 593  | Domain transfer edilemiyor; Durum Bilgisi ve Transfer Kilidi gerekli kriterlere uygun olmalıdır. (Durum Bilgisi: #ok)                |
-| 594  | Domain nameserver adresi çözümlenemedi ({0})                                                                                         |
-| 595  | İletişim bilgileri okunamıyor (whois.registrar.tld). Lütfen gizlilik korumasının açık olduğundan emin olun                           |
-| 596  | İletişim bilgileri doğrulanamadı                                                                                                     |
-| 597  | TLD bulunamadı                                                                                                                       |
-| 598  | Bilinmeyen bir hata oluştu                                                                                                           |
-| 599  | Domain yönlendirmesi bulunamadı                                                                                                      |
+## Bağlantılar
+
+- [`dna` CLI ve MCP sunucusu](https://github.com/domainreseller/cli): aynı API, terminalden ve yapay zeka ajanlarından.
+- [API dokümantasyonu](https://www.domainnameapi.com/docs/)
+- [Değişiklik günlüğü](CHANGELOG.md)
 
 ## Lisans
 
-Apache License 2.0 — bkz. [LICENSE](LICENSE).
+Apache License 2.0. Bkz. [LICENSE](LICENSE).
