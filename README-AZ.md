@@ -187,6 +187,7 @@ DomainNameApiClient client = DomainNameApiClient.Builder.fromEnvironment()
 | `paceRequests(...)` | `true` | Gateway-in sorğu limitlərinin altında qalmaq üçün sorğular arasında fasilə qoyur. |
 | `readOnly(...)` | `false` | Oxuma olmayan hər sorğunu göndərilməzdən əvvəl bloklayır. |
 | `userAgent(...)` | `DomainNameAPI-Java/<version>` | `User-Agent` header-i. |
+| `app(name, version)` | `java`, SDK versiyası | SDK-dan istifadə edən tətbiq; `X-App` və `X-Version` kimi göndərilir ([aşağıya](#tətbiqinizi-tanıtmaq) baxın). |
 | `httpClient(...)` | SDK-nın özününkü | Öz `java.net.http.HttpClient` obyektiniz (proxy, TLS, executor). |
 | `executor(...)` | paylaşılan daemon pool | `sendAsync` metodlarının işlədiyi yer. |
 
@@ -199,6 +200,22 @@ DomainNameApiClient client = DomainNameApiClient.Builder.fromEnvironment()
 | `DNA_TEST_MODE` | `true`, `1`, `on` və ya `yes` OTE-ni seçir. `DNA_ENV` təyin edilməyibsə istifadə olunur. |
 | `DNA_BASE_URL` | İstəyə bağlı baza ünvanı əvəzləməsi. |
 | `DNA_READ_ONLY` | `true` yalnız oxuma rejimini aktiv edir. |
+| `DNA_APP`, `DNA_APP_VERSION` | SDK-dan istifadə edən tətbiq və onun versiyası (`X-App`, `X-Version`). |
+
+### Tətbiqinizi tanıtmaq
+
+Hər sorğu API-yə onu hansı inteqrasiyanın göndərdiyini bildirən iki header daşıyır: `X-App`, kiçik hərflərə çevrilmiş və
+yalnız `a-z`, `0-9`, `.`, `_` və `-` simvolları saxlanılmış tətbiq adı, və `X-Version`, yalnız rəqəm və nöqtələrdən
+ibarət versiyası. Defolt olaraq bunlar `java` və SDK versiyasıdır. Panelinizi və ya modulunuzu `app(name, version)` və
+ya `DNA_APP`/`DNA_APP_VERSION` ilə göstərin; boş və ya yanlış ad `java`-ya, boş versiya isə SDK versiyasına qayıdır.
+Başqa heç nə göndərilmir və `User-Agent` dəyişmir.
+
+```java
+DomainNameApiClient client = DomainNameApiClient.builder()
+        .credentials(resellerId, apiKey)
+        .app("WiseCP", "V2.0.20-beta")   // sends X-App: wisecp, X-Version: 2.0.20
+        .build();
+```
 
 Klient thread-safe-dir. Hər giriş məlumatı dəsti üçün bir dənə yaradın və tətbiqin bütün işləmə müddətində təkrar istifadə edin.
 

@@ -213,6 +213,7 @@ DomainNameApiClient client = DomainNameApiClient.Builder.fromEnvironment()
 | `paceRequests(...)` | `true` | يوزّع الطلبات زمنيًا لتبقى ضمن حدود معدل الطلبات في البوابة (gateway). |
 | `readOnly(...)` | `false` | يمنع كل طلب ليس قراءةً، قبل إرساله. |
 | `userAgent(...)` | `DomainNameAPI-Java/<version>` | ترويسة `User-Agent`. |
+| `app(name, version)` | `java`، إصدار الحزمة | التطبيق الذي يستخدم الحزمة، يُرسل في `X-App` و`X-Version` (انظر [أدناه](#تعريف-تطبيقك)). |
 | `httpClient(...)` | العميل الخاص بالحزمة | `java.net.http.HttpClient` الخاص بك (وكيل، TLS، منفّذ). |
 | `executor(...)` | مجمّع خيوط خفية (daemon) مشترك | المكان الذي تعمل فيه دوال `sendAsync`. |
 
@@ -225,6 +226,21 @@ DomainNameApiClient client = DomainNameApiClient.Builder.fromEnvironment()
 | `DNA_TEST_MODE` | القيم `true` أو `1` أو `on` أو `yes` تختار OTE. تُستخدم عند عدم ضبط `DNA_ENV`. |
 | `DNA_BASE_URL` | تجاوز اختياري للعنوان الأساسي. |
 | `DNA_READ_ONLY` | القيمة `true` تفعّل وضع القراءة فقط. |
+| `DNA_APP`, `DNA_APP_VERSION` | التطبيق الذي يستخدم الحزمة وإصداره (`X-App`، `X-Version`). |
+
+### تعريف تطبيقك
+
+يحمل كل طلب ترويستين تُخبران الـ API بالتكامل الذي أرسله: `X-App`، اسم التطبيق بأحرف صغيرة مع الإبقاء على `a-z` و`0-9`
+و`.` و`_` و`-` فقط، و`X-Version`، إصداره بالأرقام والنقاط فقط. القيمتان الافتراضيتان هما `java` وإصدار الحزمة. حدّد
+لوحتك أو وحدتك عبر `app(name, version)` أو `DNA_APP`/`DNA_APP_VERSION`؛ الاسم الفارغ أو غير الصالح يعود إلى `java`،
+والإصدار الفارغ يعود إلى إصدار الحزمة. لا يُرسل أي شيء آخر، ولا تتغير ترويسة `User-Agent`.
+
+```java
+DomainNameApiClient client = DomainNameApiClient.builder()
+        .credentials(resellerId, apiKey)
+        .app("WiseCP", "V2.0.20-beta")   // sends X-App: wisecp, X-Version: 2.0.20
+        .build();
+```
 
 العميل آمن للاستخدام من عدة خيوط (thread-safe). أنشئ عميلًا واحدًا لكل مجموعة بيانات اعتماد، وأعد استخدامه طوال عمر التطبيق.
 

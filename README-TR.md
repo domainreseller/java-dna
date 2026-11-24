@@ -187,6 +187,7 @@ DomainNameApiClient client = DomainNameApiClient.Builder.fromEnvironment()
 | `paceRequests(...)` | `true` | İstekleri, geçidin hız sınırlarının altında kalacak şekilde aralıklar. |
 | `readOnly(...)` | `false` | Okuma olmayan her isteği, gönderilmeden önce engeller. |
 | `userAgent(...)` | `DomainNameAPI-Java/<version>` | `User-Agent` başlığı. |
+| `app(name, version)` | `java`, SDK sürümü | SDK'yı kullanan uygulama; `X-App` ve `X-Version` olarak gönderilir (bkz. [aşağısı](#uygulamanızı-tanıtmak)). |
 | `httpClient(...)` | SDK'nın kendi istemcisi | Kendi `java.net.http.HttpClient` nesneniz (proxy, TLS, executor). |
 | `executor(...)` | paylaşılan bir daemon havuzu | `sendAsync` metotlarının çalıştığı yer. |
 
@@ -199,6 +200,22 @@ DomainNameApiClient client = DomainNameApiClient.Builder.fromEnvironment()
 | `DNA_TEST_MODE` | `true`, `1`, `on` veya `yes` OTE'yi seçer. `DNA_ENV` ayarlı değilse kullanılır. |
 | `DNA_BASE_URL` | İsteğe bağlı temel adres geçersiz kılma. |
 | `DNA_READ_ONLY` | `true`, salt-okunur modu açar. |
+| `DNA_APP`, `DNA_APP_VERSION` | SDK'yı kullanan uygulama ve sürümü (`X-App`, `X-Version`). |
+
+### Uygulamanızı tanıtmak
+
+Her istek, API'ye onu hangi entegrasyonun gönderdiğini bildiren iki başlık taşır: `X-App`, küçük harfe çevrilmiş ve
+yalnızca `a-z`, `0-9`, `.`, `_` ve `-` karakterleri bırakılmış uygulama adı; `X-Version`, yalnızca rakam ve noktalardan
+oluşan sürümü. Varsayılan değerler `java` ve SDK sürümüdür. Panelinizi veya modülünüzü `app(name, version)` ya da
+`DNA_APP`/`DNA_APP_VERSION` ile belirtin; boş veya geçersiz bir ad `java`'ya, boş bir sürüm SDK sürümüne döner. Başka
+hiçbir şey gönderilmez ve `User-Agent` değişmez.
+
+```java
+DomainNameApiClient client = DomainNameApiClient.builder()
+        .credentials(resellerId, apiKey)
+        .app("WiseCP", "V2.0.20-beta")   // sends X-App: wisecp, X-Version: 2.0.20
+        .build();
+```
 
 İstemci thread-safe'tir. Her kimlik bilgisi kümesi için bir tane oluşturun ve uygulamanın ömrü boyunca yeniden kullanın.
 

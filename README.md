@@ -179,6 +179,7 @@ DomainNameApiClient client = DomainNameApiClient.Builder.fromEnvironment()
 | `paceRequests(...)` | `true` | Spaces requests to stay under the gateway's rate limits. |
 | `readOnly(...)` | `false` | Blocks every request that is not a read, before it is sent. |
 | `userAgent(...)` | `DomainNameAPI-Java/<version>` | The `User-Agent` header. |
+| `app(name, version)` | `java`, the SDK version | The application that uses the SDK, sent as `X-App` and `X-Version` (see [below](#identifying-your-application)). |
 | `httpClient(...)` | the SDK's own | Your own `java.net.http.HttpClient` (proxy, TLS, executor). |
 | `executor(...)` | a shared daemon pool | Where the `sendAsync` methods run. |
 
@@ -191,6 +192,22 @@ DomainNameApiClient client = DomainNameApiClient.Builder.fromEnvironment()
 | `DNA_TEST_MODE` | `true`, `1`, `on` or `yes` selects OTE. Used when `DNA_ENV` is not set. |
 | `DNA_BASE_URL` | Optional base address override. |
 | `DNA_READ_ONLY` | `true` turns on read-only mode. |
+| `DNA_APP`, `DNA_APP_VERSION` | The application that uses the SDK and its version (`X-App`, `X-Version`). |
+
+### Identifying your application
+
+Every request carries two headers that tell the API which integration sent it: `X-App`, the application name in
+lowercase with only `a-z`, `0-9`, `.`, `_` and `-` kept, and `X-Version`, its version with digits and dots only. By
+default they are `java` and the SDK version. Name your panel or module with `app(name, version)` or
+`DNA_APP`/`DNA_APP_VERSION`; an empty or invalid name falls back to `java`, an empty version to the SDK version. Nothing
+else is sent, and the `User-Agent` stays the same.
+
+```java
+DomainNameApiClient client = DomainNameApiClient.builder()
+        .credentials(resellerId, apiKey)
+        .app("WiseCP", "V2.0.20-beta")   // sends X-App: wisecp, X-Version: 2.0.20
+        .build();
+```
 
 The client is thread-safe. Create one per set of credentials and reuse it for the lifetime of the application.
 

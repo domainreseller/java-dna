@@ -74,6 +74,9 @@ public final class DomainNameApiClient {
     public static final String DEFAULT_USER_AGENT =
             "DomainNameAPI-Java/" + VERSION + " (+https://github.com/domainreseller/java-dna)";
 
+    /** The default {@code X-App} header: the application that uses the SDK. */
+    public static final String DEFAULT_APP = "java";
+
     private static final String API_PREFIX = "api/v1/";
 
     private final HttpClient http;
@@ -87,6 +90,8 @@ public final class DomainNameApiClient {
     private final boolean paceRequests;
     private final boolean readOnly;
     private final String userAgent;
+    private final String app;
+    private final String appVersion;
     private final Executor executor;
     private final Clock clock;
     private final Sleeper sleeper;
@@ -114,6 +119,10 @@ public final class DomainNameApiClient {
         this.readOnly = builder.readOnly;
         this.userAgent = builder.userAgent == null || builder.userAgent.isBlank()
                 ? DEFAULT_USER_AGENT : builder.userAgent.trim();
+        String app = normalizeApp(builder.app);
+        this.app = app.isEmpty() ? DEFAULT_APP : app;
+        String appVersion = normalizeVersion(builder.appVersion);
+        this.appVersion = appVersion.isEmpty() ? normalizeVersion(VERSION) : appVersion;
         this.executor = builder.executor;
         this.clock = builder.clock;
         this.sleeper = builder.sleeper;
@@ -160,7 +169,7 @@ public final class DomainNameApiClient {
     /**
      * Creates a client from the {@code DNA_RESELLER_ID}, {@code DNA_API_KEY}, {@code DNA_ENV} (or
      * {@code DNA_TEST_MODE}), {@code DNA_BASE_URL} and {@code DNA_READ_ONLY} environment variables, the same ones
-     * the {@code dna} CLI reads. Use {@link Builder#fromEnvironment()} to change other settings as well.
+     * the {@code dna} CLI reads, and {@code DNA_APP} and {@code DNA_APP_VERSION} (see {@link Builder#app}). Use {@link Builder#fromEnvironment()} to change other settings as well.
      *
      * @return the client
      * @throws IllegalArgumentException when {@code DNA_ENV} or {@code DNA_BASE_URL} cannot be read
@@ -212,6 +221,25 @@ public final class DomainNameApiClient {
      */
     public String userAgent() {
         return userAgent;
+    }
+
+    /**
+     * Returns the {@code X-App} header the client sends with every request: the application that uses the SDK.
+     *
+     * @return the application name, lowercase; {@link #DEFAULT_APP} unless {@link Builder#app} set another
+     */
+    public String app() {
+        return app;
+    }
+
+    /**
+     * Returns the {@code X-Version} header the client sends with every request: the version of the application that
+     * uses the SDK.
+     *
+     * @return the version, digits and dots only; the SDK version unless {@link Builder#app} set another
+     */
+    public String appVersion() {
+        return appVersion;
     }
 
     /**
@@ -492,6 +520,8 @@ public final class DomainNameApiClient {
                 .timeout(timeout)
                 .header("Accept", "application/json")
                 .header("User-Agent", userAgent)
+                .header("X-App", app)
+                .header("X-Version", appVersion)
                 .header("X-API-KEY", apiKey)
                 .header("__reseller", resellerId);
         HttpRequest.BodyPublisher publisher = json == null
@@ -619,6 +649,16 @@ public final class DomainNameApiClient {
         }
     }
 
+    /** Lowercase, keeping only {@code [a-z0-9._-]}. */
+    static String normalizeApp(String name) {
+        return name == null ? "" : name.trim().toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9._-]", "");
+    }
+
+    /** Digits and dots only, without leading or trailing dots: {@code V2.0.20-beta} becomes {@code 2.0.20}. */
+    static String normalizeVersion(String version) {
+        return version == null ? "" : version.replaceAll("[^0-9.]", "").replaceAll("^\\.+|\\.+$", "");
+    }
+
     /**
      * Settings of a {@link DomainNameApiClient}. Only the credentials are required; everything else has a sensible
      * default. A builder is not thread-safe; the client it builds is.
@@ -643,6 +683,8 @@ public final class DomainNameApiClient {
         private boolean paceRequests = true;
         private boolean readOnly;
         private String userAgent;
+        private String app;
+        private String appVersion;
         private HttpClient httpClient;
         private Executor executor;
         private Clock clock = Clock.systemUTC();
@@ -655,7 +697,8 @@ public final class DomainNameApiClient {
          * Returns a builder filled from the environment variables the DomainNameAPI tools share:
          * {@code DNA_RESELLER_ID} and {@code DNA_API_KEY} (the credentials), {@code DNA_ENV} ({@code production} or
          * {@code ote}) or {@code DNA_TEST_MODE} ({@code true} for OTE), {@code DNA_BASE_URL} (an optional base address
-         * override) and {@code DNA_READ_ONLY} ({@code true} blocks everything but reads).
+         * override), {@code DNA_READ_ONLY} ({@code true} blocks everything but reads), and {@code DNA_APP} and
+         * {@code DNA_APP_VERSION} (the application that uses the SDK, see {@link #app(String, String)}).
          *
          * @return the builder
          * @throws IllegalArgumentException when {@code DNA_ENV} or {@code DNA_BASE_URL} cannot be read
@@ -695,6 +738,7 @@ public final class DomainNameApiClient {
 
             String readOnly = variable.apply("DNA_READ_ONLY").toLowerCase(Locale.ROOT);
             builder.readOnly(readOnly.equals("true") || readOnly.equals("1") || readOnly.equals("on") || readOnly.equals("yes"));
+            builder.app(variable.apply("DNA_APP"), variable.apply("DNA_APP_VERSION"));
             return builder;
         }
 
@@ -835,6 +879,24 @@ public final class DomainNameApiClient {
          */
         public Builder userAgent(String userAgent) {
             this.userAgent = userAgent;
+            return this;
+        }
+
+        /**
+         * Names the application that uses the SDK, for example your billing panel or its module. Every request then
+         * carries the headers {@code X-App} (the name, lowercase, only {@code a-z}, {@code 0-9}, {@code .}, {@code _}
+         * and {@code -} kept) and {@code X-Version} (the version, digits and dots only: {@code V2.0.20-beta} is sent as
+         * {@code 2.0.20}). Without this call the client sends {@code X-App: java} and the SDK version. The
+         * {@code User-Agent} header does not change.
+         *
+         * @param name    the application name, for example {@code WiseCP}; empty, null or nothing left after
+         *                cleaning means {@link DomainNameApiClient#DEFAULT_APP}
+         * @param version the application version, for example {@code V2.0.20}; empty or null means the SDK version
+         * @return this builder
+         */
+        public Builder app(String name, String version) {
+            this.app = name;
+            this.appVersion = version;
             return this;
         }
 

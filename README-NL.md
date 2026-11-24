@@ -187,6 +187,7 @@ DomainNameApiClient client = DomainNameApiClient.Builder.fromEnvironment()
 | `paceRequests(...)` | `true` | Spreidt requests zodat je onder de rate limits van de gateway blijft. |
 | `readOnly(...)` | `false` | Blokkeert elk request dat geen leesactie is, voordat het wordt verstuurd. |
 | `userAgent(...)` | `DomainNameAPI-Java/<version>` | De `User-Agent`-header. |
+| `app(name, version)` | `java`, de SDK-versie | De applicatie die de SDK gebruikt, verstuurd als `X-App` en `X-Version` (zie [hieronder](#uw-applicatie-identificeren)). |
 | `httpClient(...)` | die van de SDK zelf | Je eigen `java.net.http.HttpClient` (proxy, TLS, executor). |
 | `executor(...)` | een gedeelde daemon-pool | Waar de `sendAsync`-methoden draaien. |
 
@@ -199,6 +200,22 @@ DomainNameApiClient client = DomainNameApiClient.Builder.fromEnvironment()
 | `DNA_TEST_MODE` | `true`, `1`, `on` of `yes` kiest OTE. Wordt gebruikt als `DNA_ENV` niet is ingesteld. |
 | `DNA_BASE_URL` | Optionele overschrijving van het basisadres. |
 | `DNA_READ_ONLY` | `true` zet de read-only modus aan. |
+| `DNA_APP`, `DNA_APP_VERSION` | De applicatie die de SDK gebruikt en haar versie (`X-App`, `X-Version`). |
+
+### Uw applicatie identificeren
+
+Elk verzoek bevat twee headers die de API vertellen welke integratie het verstuurde: `X-App`, de naam van de applicatie
+in kleine letters waarvan alleen `a-z`, `0-9`, `.`, `_` en `-` overblijven, en `X-Version`, haar versie met alleen
+cijfers en punten. Standaard zijn dat `java` en de SDK-versie. Geef uw paneel of module op met `app(name, version)` of
+`DNA_APP`/`DNA_APP_VERSION`; een lege of ongeldige naam wordt `java`, een lege versie de SDK-versie. Er wordt verder
+niets verstuurd en de `User-Agent` blijft gelijk.
+
+```java
+DomainNameApiClient client = DomainNameApiClient.builder()
+        .credentials(resellerId, apiKey)
+        .app("WiseCP", "V2.0.20-beta")   // sends X-App: wisecp, X-Version: 2.0.20
+        .build();
+```
 
 De client is thread-safe. Maak er één per set inloggegevens en hergebruik hem zolang de applicatie draait.
 
