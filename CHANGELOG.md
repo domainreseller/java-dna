@@ -4,6 +4,17 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Every request carries the headers `X-App` and `X-Version`, which tell the API which integration sent it. By default
+  they are `java` and the SDK version; `DomainNameApiClient.Builder.app(name, version)` or the environment variables
+  `DNA_APP` and `DNA_APP_VERSION` name your own application. The name is sent in lowercase with only `a-z`, `0-9`,
+  `.`, `_` and `-` kept, the version with digits and dots only (`V2.0.20-beta` becomes `2.0.20`); an empty or invalid
+  name falls back to `java`, an empty version to the SDK version. `DomainNameApiClient.app()` and `appVersion()`
+  return the values sent. The `User-Agent` header does not change.
+
 ## [2.0.0] - 2026-11-22
 
 A new SDK, modelled on the [`dna` CLI](https://github.com/domainreseller/cli) and built from the same API document.

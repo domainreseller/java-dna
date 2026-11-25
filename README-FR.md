@@ -187,6 +187,7 @@ DomainNameApiClient client = DomainNameApiClient.Builder.fromEnvironment()
 | `paceRequests(...)` | `true` | Espace les requêtes pour rester sous les limites de débit de la passerelle. |
 | `readOnly(...)` | `false` | Bloque, avant envoi, toute requête qui n'est pas une lecture. |
 | `userAgent(...)` | `DomainNameAPI-Java/<version>` | L'en-tête `User-Agent`. |
+| `app(name, version)` | `java`, la version du SDK | L'application qui utilise le SDK, envoyée dans `X-App` et `X-Version` (voir [ci-dessous](#identifier-votre-application)). |
 | `httpClient(...)` | celui du SDK | Votre propre `java.net.http.HttpClient` (proxy, TLS, executor). |
 | `executor(...)` | un pool de threads démons partagé | L'endroit où s'exécutent les méthodes `sendAsync`. |
 
@@ -199,6 +200,22 @@ DomainNameApiClient client = DomainNameApiClient.Builder.fromEnvironment()
 | `DNA_TEST_MODE` | `true`, `1`, `on` ou `yes` sélectionne l'OTE. Utilisée quand `DNA_ENV` n'est pas définie. |
 | `DNA_BASE_URL` | Remplacement facultatif de l'adresse de base. |
 | `DNA_READ_ONLY` | `true` active le mode lecture seule. |
+| `DNA_APP`, `DNA_APP_VERSION` | L'application qui utilise le SDK et sa version (`X-App`, `X-Version`). |
+
+### Identifier votre application
+
+Chaque requête porte deux en-têtes qui indiquent à l'API quelle intégration l'a envoyée : `X-App`, le nom de
+l'application en minuscules dont seuls `a-z`, `0-9`, `.`, `_` et `-` sont conservés, et `X-Version`, sa version réduite
+aux chiffres et aux points. Par défaut, ce sont `java` et la version du SDK. Indiquez votre panneau ou votre module avec
+`app(name, version)` ou `DNA_APP`/`DNA_APP_VERSION` ; un nom vide ou invalide redevient `java`, une version vide la
+version du SDK. Rien d'autre n'est envoyé et le `User-Agent` ne change pas.
+
+```java
+DomainNameApiClient client = DomainNameApiClient.builder()
+        .credentials(resellerId, apiKey)
+        .app("WiseCP", "V2.0.20-beta")   // sends X-App: wisecp, X-Version: 2.0.20
+        .build();
+```
 
 Le client est thread-safe. Créez-en un par jeu d'identifiants et réutilisez-le pendant toute la durée de vie de l'application.
 

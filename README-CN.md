@@ -186,6 +186,7 @@ DomainNameApiClient client = DomainNameApiClient.Builder.fromEnvironment()
 | `paceRequests(...)` | `true` | 控制请求间隔，使其保持在网关的速率限制之内。 |
 | `readOnly(...)` | `false` | 在发送之前阻止所有非读取请求。 |
 | `userAgent(...)` | `DomainNameAPI-Java/<version>` | `User-Agent` 请求头。 |
+| `app(name, version)` | `java`、SDK 版本 | 使用 SDK 的应用，以 `X-App` 和 `X-Version` 发送（见[下文](#标识您的应用)）。 |
 | `httpClient(...)` | SDK 自带的客户端 | 你自己的 `java.net.http.HttpClient`（代理、TLS、执行器）。 |
 | `executor(...)` | 一个共享的守护线程池 | `sendAsync` 系列方法在其中运行。 |
 
@@ -198,6 +199,18 @@ DomainNameApiClient client = DomainNameApiClient.Builder.fromEnvironment()
 | `DNA_TEST_MODE` | `true`、`1`、`on` 或 `yes` 表示选择 OTE。未设置 `DNA_ENV` 时使用。 |
 | `DNA_BASE_URL` | 可选，覆盖基础地址。 |
 | `DNA_READ_ONLY` | `true` 表示开启只读模式。 |
+| `DNA_APP`, `DNA_APP_VERSION` | 使用 SDK 的应用及其版本（`X-App`、`X-Version`）。 |
+
+### 标识您的应用
+
+每个请求都带有两个请求头，告诉 API 是哪个集成发出的：`X-App` 是转为小写、只保留 `a-z`、`0-9`、`.`、`_` 和 `-` 的应用名称；`X-Version` 是只含数字和点的应用版本。默认值为 `java` 和 SDK 版本。用 `app(name, version)` 或 `DNA_APP`/`DNA_APP_VERSION` 指明您的面板或模块；名称为空或无效时回退为 `java`，版本为空时回退为 SDK 版本。除此之外不发送任何内容，`User-Agent` 也保持不变。
+
+```java
+DomainNameApiClient client = DomainNameApiClient.builder()
+        .credentials(resellerId, apiKey)
+        .app("WiseCP", "V2.0.20-beta")   // sends X-App: wisecp, X-Version: 2.0.20
+        .build();
+```
 
 客户端是线程安全的。每组凭据创建一个客户端，并在应用的整个生命周期内复用。
 

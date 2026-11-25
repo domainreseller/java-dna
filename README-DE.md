@@ -187,6 +187,7 @@ DomainNameApiClient client = DomainNameApiClient.Builder.fromEnvironment()
 | `paceRequests(...)` | `true` | Verteilt Requests zeitlich, um unter den Rate-Limits des Gateways zu bleiben. |
 | `readOnly(...)` | `false` | Blockiert vor dem Senden jeden Request, der kein Lesezugriff ist. |
 | `userAgent(...)` | `DomainNameAPI-Java/<version>` | Der `User-Agent`-Header. |
+| `app(name, version)` | `java`, die SDK-Version | Die Anwendung, die das SDK nutzt, gesendet als `X-App` und `X-Version` (siehe [unten](#ihre-anwendung-angeben)). |
 | `httpClient(...)` | der eigene des SDK | Ihr eigener `java.net.http.HttpClient` (Proxy, TLS, Executor). |
 | `executor(...)` | ein gemeinsamer Daemon-Pool | Wo die `sendAsync`-Methoden ausgeführt werden. |
 
@@ -199,6 +200,22 @@ DomainNameApiClient client = DomainNameApiClient.Builder.fromEnvironment()
 | `DNA_TEST_MODE` | `true`, `1`, `on` oder `yes` wählt OTE. Wird verwendet, wenn `DNA_ENV` nicht gesetzt ist. |
 | `DNA_BASE_URL` | Optionale Überschreibung der Basisadresse. |
 | `DNA_READ_ONLY` | `true` schaltet den Nur-Lese-Modus ein. |
+| `DNA_APP`, `DNA_APP_VERSION` | Die Anwendung, die das SDK nutzt, und ihre Version (`X-App`, `X-Version`). |
+
+### Ihre Anwendung angeben
+
+Jede Anfrage trägt zwei Header, die der API sagen, welche Integration sie gesendet hat: `X-App`, der Anwendungsname in
+Kleinbuchstaben, von dem nur `a-z`, `0-9`, `.`, `_` und `-` übrig bleiben, und `X-Version`, ihre Version aus Ziffern und
+Punkten. Standardmäßig sind das `java` und die SDK-Version. Geben Sie Ihr Panel oder Modul mit `app(name, version)` oder
+`DNA_APP`/`DNA_APP_VERSION` an; ein leerer oder ungültiger Name ergibt `java`, eine leere Version die SDK-Version. Sonst
+wird nichts gesendet, und der `User-Agent` bleibt unverändert.
+
+```java
+DomainNameApiClient client = DomainNameApiClient.builder()
+        .credentials(resellerId, apiKey)
+        .app("WiseCP", "V2.0.20-beta")   // sends X-App: wisecp, X-Version: 2.0.20
+        .build();
+```
 
 Der Client ist threadsicher. Erstellen Sie pro Satz Zugangsdaten einen Client und verwenden Sie ihn für die Lebensdauer der Anwendung weiter.
 

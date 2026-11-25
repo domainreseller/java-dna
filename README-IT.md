@@ -187,6 +187,7 @@ DomainNameApiClient client = DomainNameApiClient.Builder.fromEnvironment()
 | `paceRequests(...)` | `true` | Distanzia le richieste per restare entro i limiti di richieste del gateway. |
 | `readOnly(...)` | `false` | Blocca, prima dell'invio, ogni richiesta che non sia una lettura. |
 | `userAgent(...)` | `DomainNameAPI-Java/<version>` | L'header `User-Agent`. |
+| `app(name, version)` | `java`, la versione dell'SDK | L'applicazione che usa l'SDK, inviata come `X-App` e `X-Version` (vedi [sotto](#identificare-la-tua-applicazione)). |
 | `httpClient(...)` | quello dell'SDK | Il tuo `java.net.http.HttpClient` (proxy, TLS, executor). |
 | `executor(...)` | un pool daemon condiviso | Dove vengono eseguiti i metodi `sendAsync`. |
 
@@ -199,6 +200,22 @@ DomainNameApiClient client = DomainNameApiClient.Builder.fromEnvironment()
 | `DNA_TEST_MODE` | `true`, `1`, `on` o `yes` seleziona OTE. Usata quando `DNA_ENV` non è impostata. |
 | `DNA_BASE_URL` | Sostituzione facoltativa dell'indirizzo base. |
 | `DNA_READ_ONLY` | `true` attiva la modalità di sola lettura. |
+| `DNA_APP`, `DNA_APP_VERSION` | L'applicazione che usa l'SDK e la sua versione (`X-App`, `X-Version`). |
+
+### Identificare la tua applicazione
+
+Ogni richiesta porta due header che dicono all'API quale integrazione l'ha inviata: `X-App`, il nome dell'applicazione
+in minuscolo di cui restano solo `a-z`, `0-9`, `.`, `_` e `-`, e `X-Version`, la sua versione fatta solo di cifre e
+punti. Per impostazione predefinita sono `java` e la versione dell'SDK. Indica il tuo pannello o modulo con `app(name,
+version)` oppure `DNA_APP`/`DNA_APP_VERSION`; un nome vuoto o non valido torna a `java`, una versione vuota alla
+versione dell'SDK. Non viene inviato nient'altro e lo `User-Agent` non cambia.
+
+```java
+DomainNameApiClient client = DomainNameApiClient.builder()
+        .credentials(resellerId, apiKey)
+        .app("WiseCP", "V2.0.20-beta")   // sends X-App: wisecp, X-Version: 2.0.20
+        .build();
+```
 
 Il client è thread-safe. Creane uno per ogni set di credenziali e riusalo per tutta la vita dell'applicazione.
 
