@@ -64,20 +64,20 @@ document, the same safety classes, retry rules and error codes.
 > **Always use the [latest release](https://github.com/domainreseller/java-dna/releases/latest).** Release packages are versioned and tested.
 > The green **Code → Download ZIP** button downloads the development branch instead.
 
-Coordinates: `io.github.domainreseller:domainnameapi:2.0.0`.
+Coordinates: `io.github.domainreseller:domainnameapi:2.1.0`.
 
 ```xml
 <dependency>
     <groupId>io.github.domainreseller</groupId>
     <artifactId>domainnameapi</artifactId>
-    <version>2.0.0</version>
+    <version>2.1.0</version>
 </dependency>
 ```
 
 ```kotlin
 // build.gradle.kts
 dependencies {
-    implementation("io.github.domainreseller:domainnameapi:2.0.0")
+    implementation("io.github.domainreseller:domainnameapi:2.1.0")
 }
 ```
 

@@ -190,8 +190,8 @@ class ClientTest {
 
     @Test
     void versionComesFromTheBuild() {
-        assertEquals("2.0.0", DomainNameApiClient.VERSION);
-        assertEquals("DomainNameAPI-Java/2.0.0 (+https://github.com/domainreseller/java-dna)", DomainNameApiClient.DEFAULT_USER_AGENT);
+        assertEquals("2.1.0", DomainNameApiClient.VERSION);
+        assertEquals("DomainNameAPI-Java/2.1.0 (+https://github.com/domainreseller/java-dna)", DomainNameApiClient.DEFAULT_USER_AGENT);
     }
 
     @Test

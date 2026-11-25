@@ -66,20 +66,20 @@ sənədi, eyni təhlükəsizlik sinifləri, təkrar qaydaları və xəta kodlar�
 > **Həmişə [son buraxılışdan](https://github.com/domainreseller/java-dna/releases/latest) istifadə edin.** Buraxılış paketləri versiyalaşdırılır və test edilir.
 > Yaşıl **Code → Download ZIP** düyməsi isə inkişaf branch-ini yükləyir.
 
-Koordinatlar: `io.github.domainreseller:domainnameapi:2.0.0`.
+Koordinatlar: `io.github.domainreseller:domainnameapi:2.1.0`.
 
 ```xml
 <dependency>
     <groupId>io.github.domainreseller</groupId>
     <artifactId>domainnameapi</artifactId>
-    <version>2.0.0</version>
+    <version>2.1.0</version>
 </dependency>
 ```
 
 ```kotlin
 // build.gradle.kts
 dependencies {
-    implementation("io.github.domainreseller:domainnameapi:2.0.0")
+    implementation("io.github.domainreseller:domainnameapi:2.1.0")
 }
 ```
 

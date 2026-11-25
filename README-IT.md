@@ -66,20 +66,20 @@ API, stesse classi di sicurezza, stesse regole di retry e stessi codici di error
 > **Usa sempre l'[ultima release](https://github.com/domainreseller/java-dna/releases/latest).** I pacchetti delle release sono versionati e testati.
 > Il pulsante verde **Code → Download ZIP** scarica invece il branch di sviluppo.
 
-Coordinate: `io.github.domainreseller:domainnameapi:2.0.0`.
+Coordinate: `io.github.domainreseller:domainnameapi:2.1.0`.
 
 ```xml
 <dependency>
     <groupId>io.github.domainreseller</groupId>
     <artifactId>domainnameapi</artifactId>
-    <version>2.0.0</version>
+    <version>2.1.0</version>
 </dependency>
 ```
 
 ```kotlin
 // build.gradle.kts
 dependencies {
-    implementation("io.github.domainreseller:domainnameapi:2.0.0")
+    implementation("io.github.domainreseller:domainnameapi:2.1.0")
 }
 ```
 

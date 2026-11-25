@@ -65,20 +65,20 @@ if (search.info() != null && search.info().isAvailable()) {
 > **请始终使用[最新版本](https://github.com/domainreseller/java-dna/releases/latest)。** 发布包均带有版本号并经过测试。
 > 绿色的 **Code → Download ZIP** 按钮下载的是开发分支。
 
-坐标：`io.github.domainreseller:domainnameapi:2.0.0`。
+坐标：`io.github.domainreseller:domainnameapi:2.1.0`。
 
 ```xml
 <dependency>
     <groupId>io.github.domainreseller</groupId>
     <artifactId>domainnameapi</artifactId>
-    <version>2.0.0</version>
+    <version>2.1.0</version>
 </dependency>
 ```
 
 ```kotlin
 // build.gradle.kts
 dependencies {
-    implementation("io.github.domainreseller:domainnameapi:2.0.0")
+    implementation("io.github.domainreseller:domainnameapi:2.1.0")
 }
 ```
 

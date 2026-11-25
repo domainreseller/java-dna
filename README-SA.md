@@ -76,7 +76,7 @@ if (search.info() != null && search.info().isAvailable()) {
 > **استخدم دائمًا [أحدث إصدار](https://github.com/domainreseller/java-dna/releases/latest).** حزم الإصدارات مرقّمة بإصدارات ومُختبرة.
 > أما زر **Code → Download ZIP** الأخضر فينزّل فرع التطوير بدلًا منها.
 
-الإحداثيات (coordinates): ‏`io.github.domainreseller:domainnameapi:2.0.0`.
+الإحداثيات (coordinates): ‏`io.github.domainreseller:domainnameapi:2.1.0`.
 
 </div>
 
@@ -84,14 +84,14 @@ if (search.info() != null && search.info().isAvailable()) {
 <dependency>
     <groupId>io.github.domainreseller</groupId>
     <artifactId>domainnameapi</artifactId>
-    <version>2.0.0</version>
+    <version>2.1.0</version>
 </dependency>
 ```
 
 ```kotlin
 // build.gradle.kts
 dependencies {
-    implementation("io.github.domainreseller:domainnameapi:2.0.0")
+    implementation("io.github.domainreseller:domainnameapi:2.1.0")
 }
 ```
 
