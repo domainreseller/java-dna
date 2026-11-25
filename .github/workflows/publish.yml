@@ -8,6 +8,9 @@
 #   GPG_PASSPHRASE    its passphrase
 # The public half of the key must be on a public key server, for example
 #   gpg --keyserver keyserver.ubuntu.com --send-keys <KEY_ID>
+#
+# Until those secrets exist the job only prints a notice and succeeds, so a
+# release never shows a red publish run before Maven Central is set up.
 
 name: Publish
 
@@ -23,9 +26,23 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
+      - name: Check the publishing secrets
+        id: creds
+        env:
+          HAS_TOKEN: ${{ secrets.CENTRAL_TOKEN_USERNAME != '' && secrets.CENTRAL_TOKEN_PASSWORD != '' }}
+          HAS_KEY: ${{ secrets.GPG_PRIVATE_KEY != '' && secrets.GPG_PASSPHRASE != '' }}
+        run: |
+          if [ "$HAS_TOKEN" = "true" ] && [ "$HAS_KEY" = "true" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::Maven Central is not set up yet (CENTRAL_TOKEN_* and GPG_* secrets), skipping the publish."
+          fi
+
       - uses: actions/checkout@v5
+        if: steps.creds.outputs.ready == 'true'
 
       - uses: actions/setup-java@v5
+        if: steps.creds.outputs.ready == 'true'
         with:
           distribution: temurin
           java-version: '17'
@@ -37,6 +54,7 @@ jobs:
           gpg-passphrase: GPG_PASSPHRASE
 
       - name: Read the version
+        if: steps.creds.outputs.ready == 'true'
         id: version
         run: |
           v=$(mvn -B -q help:evaluate -Dexpression=project.version -DforceStdout)
@@ -48,6 +66,7 @@ jobs:
           fi
 
       - name: Skip when this version is already on Maven Central
+        if: steps.creds.outputs.ready == 'true'
         id: check
         run: |
           url="https://repo1.maven.org/maven2/io/github/domainreseller/domainnameapi/${{ steps.version.outputs.version }}/"
@@ -57,7 +76,7 @@ jobs:
           fi
 
       - name: Build, sign and publish
-        if: steps.check.outputs.skip != 'true'
+        if: steps.creds.outputs.ready == 'true' && steps.check.outputs.skip != 'true'
         run: mvn -B -Prelease deploy
         env:
           CENTRAL_TOKEN_USERNAME: ${{ secrets.CENTRAL_TOKEN_USERNAME }}
